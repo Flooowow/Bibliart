@@ -606,8 +606,15 @@ function openImportModal() {
   input.click();
 }
 
-function importFromQuizArt(quizartCards) {
-  if (!Array.isArray(quizartCards)) {
+function importFromQuizArt(quizartData) {
+  // Gérer la structure QuizArt (objet avec propriété cards)
+  let quizartCards = [];
+  
+  if (Array.isArray(quizartData)) {
+    quizartCards = quizartData;
+  } else if (quizartData.cards && Array.isArray(quizartData.cards)) {
+    quizartCards = quizartData.cards;
+  } else {
     showToast('❌ Format de fichier invalide', 'error');
     return;
   }

@@ -30,19 +30,48 @@ body {
   background-attachment: fixed;
   color: var(--anthracite);
   overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(124, 29, 29, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.main-layout {
+  position: relative;
+  z-index: 2;
 }
 
 /* ==================== HEADER ==================== */
 .header {
   background: linear-gradient(135deg, var(--burgundy) 0%, var(--dark-burgundy) 100%);
-  padding: 20px 50px;
+  padding: 18px 50px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 4px solid var(--gold);
+  border-bottom: 3px double var(--gold);
   position: relative;
   z-index: 100;
   box-shadow: 0 4px 20px rgba(124, 29, 29, 0.3);
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.6;
 }
 
 .header-left {
@@ -51,26 +80,34 @@ body {
   gap: 25px;
 }
 
-.logo-placeholder {
-  width: 55px;
-  height: 55px;
-  background: radial-gradient(circle, var(--gold) 0%, #B8941F 100%);
-  border-radius: 12px;
+.logo-container {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
-  border: 2px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  background: white;
+  padding: 3px;
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .header-text h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 36px;
+  font-size: 38px;
   font-weight: 700;
   color: var(--cream);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   margin: 0;
+  font-style: italic;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .tagline {
