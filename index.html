@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliart - Votre bibliothèque d'histoire de l'art</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-placeholder">📚</div>
+      <div class="header-text">
+        <h1>Bibliart</h1>
+        <p class="tagline">Votre bibliothèque personnelle d'histoire de l'art</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="mode-toggle">
+        <button id="readModeBtn" class="mode-btn active">📖 Lecture</button>
+        <button id="editModeBtn" class="mode-btn">✏️ Édition</button>
+      </div>
+      <button id="saveBtn" class="btn btn-save" style="display: none;">💾 Sauvegarder</button>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Artistes</h2>
+        <button id="addArtistBtn" class="btn btn-add" style="display: none;">➕ Ajouter</button>
+      </div>
+
+      <!-- Recherche -->
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Rechercher un artiste...">
+      </div>
+
+      <!-- Tri -->
+      <div class="sort-controls">
+        <select id="sortSelect" class="sort-select">
+          <option value="alpha">A → Z</option>
+          <option value="alpha-reverse">Z → A</option>
+          <option value="chrono">Chronologique ↑</option>
+          <option value="chrono-reverse">Chronologique ↓</option>
+        </select>
+      </div>
+
+      <!-- Liste des artistes -->
+      <div id="artistsList" class="artists-list">
+        <!-- Les artistes seront ajoutés ici dynamiquement -->
+      </div>
+    </aside>
+
+    <!-- Zone principale -->
+    <main class="main-content">
+      <!-- État vide -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">🎨</div>
+        <h2>Bienvenue dans Bibliart</h2>
+        <p>Sélectionnez un artiste dans la liste ou créez-en un nouveau</p>
+        <button id="createFirstArtist" class="btn btn-primary">➕ Créer mon premier artiste</button>
+      </div>
+
+      <!-- Fiche artiste - Mode Lecture -->
+      <div id="artistCard" class="artist-card read-mode" style="display: none;">
+        <div class="artist-header">
+          <div class="artist-portrait-container">
+            <img id="artistPortrait" class="artist-portrait" src="" alt="Portrait">
+            <div class="portrait-placeholder">👤</div>
+          </div>
+          <div class="artist-info">
+            <h1 id="artistName" class="artist-name">Nom de l'artiste</h1>
+            <div class="artist-meta">
+              <span id="artistDates" class="artist-dates">1452 - 1519</span>
+              <span class="meta-separator">•</span>
+              <span id="artistBirthplace" class="artist-birthplace">Vinci, Italie</span>
+            </div>
+            <div id="artistStyle" class="artist-style">Renaissance italienne</div>
+          </div>
+          <button id="deleteArtistBtn" class="btn-icon-delete" style="display: none;" title="Supprimer cet artiste">
+            🗑️
+          </button>
+        </div>
+
+        <div class="artist-body">
+          <!-- Biographie -->
+          <section class="bio-section">
+            <h3>📖 Biographie</h3>
+            <div id="artistBio" class="artist-bio">
+              <p>Cliquez sur "✏️ Édition" pour ajouter une biographie...</p>
+            </div>
+          </section>
+
+          <!-- Galerie d'œuvres -->
+          <section class="artworks-section">
+            <div class="section-header">
+              <h3>🖼️ Œuvres</h3>
+              <button id="addArtworkBtn" class="btn btn-secondary btn-small" style="display: none;">➕ Ajouter une œuvre</button>
+            </div>
+            <div id="artworksList" class="artworks-grid">
+              <div class="empty-artworks">
+                <p>Aucune œuvre pour le moment</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Fiche artiste - Mode Édition -->
+      <div id="artistEditor" class="artist-editor" style="display: none;">
+        <div class="editor-header">
+          <h2>✏️ Édition de la fiche</h2>
+        </div>
+
+        <div class="editor-form">
+          <!-- Portrait -->
+          <div class="form-group">
+            <label for="editPortrait">Photo / Autoportrait</label>
+            <input type="file" id="editPortrait" accept="image/*">
+            <div id="editPortraitPreview" class="portrait-preview"></div>
+          </div>
+
+          <!-- Nom -->
+          <div class="form-group">
+            <label for="editName">Nom de l'artiste *</label>
+            <input type="text" id="editName" placeholder="Ex: Léonard de Vinci" required>
+          </div>
+
+          <!-- Dates -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editBirthYear">Année de naissance *</label>
+              <input type="number" id="editBirthYear" placeholder="Ex: 1452" required>
+            </div>
+            <div class="form-group">
+              <label for="editDeathYear">Année de mort</label>
+              <input type="number" id="editDeathYear" placeholder="Ex: 1519">
+            </div>
+          </div>
+
+          <!-- Lieu de naissance -->
+          <div class="form-group">
+            <label for="editBirthplace">Lieu de naissance</label>
+            <input type="text" id="editBirthplace" placeholder="Ex: Vinci, Italie">
+          </div>
+
+          <!-- Style -->
+          <div class="form-group">
+            <label for="editStyle">Style / Courant artistique</label>
+            <input type="text" id="editStyle" placeholder="Ex: Renaissance italienne">
+          </div>
+
+          <!-- Biographie -->
+          <div class="form-group">
+            <label for="editBio">Biographie</label>
+            <textarea id="editBio" rows="8" placeholder="Écrivez la biographie de l'artiste..."></textarea>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Confirmation -->
+  <div id="confirmModal" class="modal modal-popup">
+    <div class="popup-overlay"></div>
+    <div class="modal-content modal-confirm">
+      <div class="confirm-icon">⚠️</div>
+      <h3 id="confirmTitle">Confirmation</h3>
+      <p id="confirmMessage">Êtes-vous sûr ?</p>
+      <div class="modal-buttons">
+        <button id="confirmYes" class="btn btn-danger">Oui</button>
+        <button id="confirmNo" class="btn btn-secondary">Non</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajouter Œuvre -->
+  <div id="artworkModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3>➕ Ajouter une œuvre</h3>
+        <button class="modal-close" id="closeArtworkModal">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="artworkImage">Image de l'œuvre *</label>
+          <input type="file" id="artworkImage" accept="image/*" required>
+          <div id="artworkImagePreview" class="image-preview"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="artworkTitle">Titre *</label>
+          <input type="text" id="artworkTitle" placeholder="Ex: La Joconde" required>
+        </div>
+
+        <div class="form-group">
+          <label for="artworkDate">Date</label>
+          <input type="text" id="artworkDate" placeholder="Ex: 1503-1519">
+        </div>
+
+        <div class="form-group">
+          <label for="artworkAnalysis">Analyse de l'œuvre</label>
+          <textarea id="artworkAnalysis" rows="6" placeholder="Votre analyse : composition, couleurs, contexte historique, symbolique..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="saveArtworkBtn" class="btn btn-success">💾 Ajouter l'œuvre</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('closeArtworkModal').click()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
