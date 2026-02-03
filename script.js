@@ -346,6 +346,11 @@ function openArtworkModal() {
 
 function closeArtworkModal() {
   document.getElementById('artworkModal').style.display = 'none';
+  
+  // Reset du bouton
+  const saveBtn = document.getElementById('saveArtworkBtn');
+  saveBtn.textContent = '💾 Ajouter l\'œuvre';
+  delete saveBtn.dataset.editId;
 }
 
 function handleArtworkImageUpload(e) {
@@ -367,6 +372,8 @@ function saveArtwork() {
   const title = document.getElementById('artworkTitle').value.trim();
   const date = document.getElementById('artworkDate').value.trim();
   const analysis = document.getElementById('artworkAnalysis').value.trim();
+  const saveBtn = document.getElementById('saveArtworkBtn');
+  const editId = saveBtn.dataset.editId;
   
   if (!title) {
     showToast('Le titre est obligatoire', 'error');
@@ -380,19 +387,83 @@ function saveArtwork() {
     return;
   }
   
-  const newArtwork = {
-    id: Date.now(),
-    title: title,
-    date: date,
-    image: imagePreview.src,
-    analysis: analysis
-  };
-  
-  artist.artworks.push(newArtwork);
+  if (editId) {
+    // Mode édition
+    const artwork = artist.artworks.find(aw => aw.id === parseInt(editId));
+    if (artwork) {
+      artwork.title = title;
+      artwork.date = date;
+      artwork.image = imagePreview.src;
+      artwork.analysis = analysis;
+      showToast('✅ Œuvre mise à jour !', 'success');
+    }
+    delete saveBtn.dataset.editId;
+  } else {
+    // Mode création
+    const newArtwork = {
+      id: Date.now(),
+      title: title,
+      date: date,
+      image: imagePreview.src,
+      analysis: analysis
+    };
+    artist.artworks.push(newArtwork);
+    showToast('✅ Œuvre ajoutée !', 'success');
+  }
   
   saveToLocalStorage();
   closeArtworkModal();
-  showToast('✅ Œuvre ajoutée !', 'success');
+  
+  // Rafraîchir l'affichage
+  if (isEditMode) {
+    showArtistEditor();
+  } else {
+    showArtistCard();
+  }
+}
+
+function editArtworkAnalysis(artworkId) {
+  const artist = artists.find(a => a.id === currentArtistId);
+  if (!artist) return;
+  
+  const artwork = artist.artworks.find(aw => aw.id === artworkId);
+  if (!artwork) return;
+  
+  // Ouvrir le modal en mode édition
+  document.getElementById('artworkModal').style.display = 'flex';
+  
+  // Pré-remplir avec les données existantes
+  document.getElementById('artworkTitle').value = artwork.title;
+  document.getElementById('artworkDate').value = artwork.date || '';
+  document.getElementById('artworkAnalysis').value = artwork.analysis || '';
+  
+  // Afficher l'image
+  document.getElementById('artworkImagePreview').innerHTML = 
+    `<img src="${artwork.image}" alt="${artwork.title}">`;
+  
+  // Changer le comportement du bouton de sauvegarde
+  const saveBtn = document.getElementById('saveArtworkBtn');
+  saveBtn.textContent = '💾 Mettre à jour';
+  
+  // Stocker l'ID de l'artwork en cours d'édition
+  saveBtn.dataset.editId = artworkId;
+}
+
+async function deleteArtwork(artworkId) {
+  const confirmed = await showConfirm(
+    'Supprimer cette œuvre ?',
+    'Voulez-vous vraiment supprimer cette œuvre ? Cette action est irréversible.'
+  );
+  
+  if (!confirmed) return;
+  
+  const artist = artists.find(a => a.id === currentArtistId);
+  if (!artist) return;
+  
+  artist.artworks = artist.artworks.filter(aw => aw.id !== artworkId);
+  
+  saveToLocalStorage();
+  showToast('Œuvre supprimée', 'info');
   
   // Rafraîchir l'affichage
   if (isEditMode) {
@@ -414,12 +485,22 @@ function renderArtworks(artist) {
     const analysisPreview = artwork.analysis ? 
       `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis.substring(0, 200))}${artwork.analysis.length > 200 ? '...' : ''}</div>` : '';
     
+    const editButtons = isEditMode ? `
+      <div class="artwork-actions">
+        <button class="btn btn-icon btn-small" onclick="editArtworkAnalysis(${artwork.id})">✏️ Modifier</button>
+        <button class="btn btn-icon btn-small" onclick="deleteArtwork(${artwork.id})" style="color: var(--danger); border-color: rgba(165, 42, 42, 0.4);">🗑️</button>
+      </div>
+    ` : '';
+    
     return `
       <div class="artwork-card">
         ${analysisPreview}
         <img src="${artwork.image}" alt="${artwork.title}" class="artwork-image">
-        <div class="artwork-title">${escapeHtml(artwork.title)}</div>
-        ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
+        <div class="artwork-info">
+          <div class="artwork-title">${escapeHtml(artwork.title)}</div>
+          ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
+        </div>
+        ${editButtons}
       </div>
     `;
   }).join('');
@@ -513,3 +594,5 @@ function loadFromLocalStorage() {
 
 // Exposer les fonctions globales
 window.selectArtist = selectArtist;
+window.editArtworkAnalysis = editArtworkAnalysis;
+window.deleteArtwork = deleteArtwork;
