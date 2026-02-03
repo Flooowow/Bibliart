@@ -27,7 +27,8 @@ function setupEventListeners() {
   document.getElementById('addArtworkBtn').addEventListener('click', openArtworkModal);
   
   // Import/Export
-  document.getElementById('importBtn').addEventListener('click', openImportModal);
+  document.getElementById('importQuizArtBtn').addEventListener('click', openImportQuizArtModal);
+  document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
   document.getElementById('exportBtn').addEventListener('click', exportToFile);
   
   // Sauvegarde
@@ -487,12 +488,12 @@ function renderArtworks(artist) {
     const analysisPreview = artwork.analysis ? 
       `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis.substring(0, 200))}${artwork.analysis.length > 200 ? '...' : ''}</div>` : '';
     
-    const editButtons = isEditMode ? `
+    const actionButtons = `
       <div class="artwork-actions">
         <button class="btn btn-icon btn-small" onclick="editArtworkAnalysis(${artwork.id})">✏️ Modifier</button>
-        <button class="btn btn-icon btn-small" onclick="deleteArtwork(${artwork.id})" style="color: var(--danger); border-color: rgba(165, 42, 42, 0.4);">🗑️</button>
+        ${isEditMode ? `<button class="btn btn-icon btn-small" onclick="deleteArtwork(${artwork.id})" style="color: var(--danger); border-color: rgba(165, 42, 42, 0.4);">🗑️</button>` : ''}
       </div>
-    ` : '';
+    `;
     
     return `
       <div class="artwork-card">
@@ -502,7 +503,7 @@ function renderArtworks(artist) {
           <div class="artwork-title">${escapeHtml(artwork.title)}</div>
           ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
         </div>
-        ${editButtons}
+        ${actionButtons}
       </div>
     `;
   }).join('');
@@ -573,7 +574,7 @@ function escapeHtml(text) {
 }
 
 // ==================== IMPORT/EXPORT ====================
-function openImportModal() {
+function openImportQuizArtModal() {
   // Créer un input file temporaire
   const input = document.createElement('input');
   input.type = 'file';
@@ -590,7 +591,7 @@ function openImportModal() {
       // Confirmer l'import
       const confirmed = await showConfirm(
         'Importer depuis QuizArt ?',
-        `Cette action va créer des fiches artistes à partir de votre sauvegarde QuizArt. ${quizartData.length || 0} cartes détectées. Continuer ?`
+        `Cette action va créer des fiches artistes à partir de votre sauvegarde QuizArt. ${quizartData.totalCards || quizartData.length || 0} cartes détectées. Continuer ?`
       );
       
       if (!confirmed) return;
@@ -604,6 +605,62 @@ function openImportModal() {
   };
   
   input.click();
+}
+
+function openImportBibliartModal() {
+  // Créer un input file temporaire
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const bibliartData = JSON.parse(text);
+      
+      // Vérifier que c'est bien un export Bibliart
+      if (!Array.isArray(bibliartData)) {
+        showToast('❌ Format Bibliart invalide', 'error');
+        return;
+      }
+      
+      // Confirmer l'import
+      const confirmed = await showConfirm(
+        'Importer depuis Bibliart ?',
+        `Cette action va remplacer vos données actuelles. ${bibliartData.length} artistes détectés. Continuer ?`
+      );
+      
+      if (!confirmed) return;
+      
+      importFromBibliart(bibliartData);
+      
+    } catch (error) {
+      console.error('Erreur d\'import:', error);
+      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+    }
+  };
+  
+  input.click();
+}
+
+function importFromBibliart(bibliartData) {
+  artists = bibliartData;
+  currentArtistId = null;
+  
+  saveToLocalStorage();
+  renderArtistsList();
+  
+  showToast(`✅ Import Bibliart réussi ! ${artists.length} artistes importés`, 'success');
+  
+  // Sélectionner le premier artiste
+  if (artists.length > 0) {
+    selectArtist(artists[0].id);
+  } else {
+    showEmptyState();
+  }
 }
 
 function importFromQuizArt(quizartData) {
