@@ -486,12 +486,13 @@ function renderArtworks(artist) {
   
   container.innerHTML = artist.artworks.map(artwork => {
     const analysisPreview = artwork.analysis ? 
-      `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis.substring(0, 200))}${artwork.analysis.length > 200 ? '...' : ''}</div>` : '';
+      `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis)}</div>` : 
+      `<div class="artwork-analysis-preview">Aucune analyse pour cette œuvre</div>`;
     
     const actionButtons = `
       <div class="artwork-actions">
-        <button class="btn btn-icon btn-small" onclick="editArtworkAnalysis(${artwork.id})">✏️ Modifier</button>
-        ${isEditMode ? `<button class="btn btn-icon btn-small" onclick="deleteArtwork(${artwork.id})" style="color: var(--danger); border-color: rgba(165, 42, 42, 0.4);">🗑️</button>` : ''}
+        <button class="btn-icon-small" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
+        ${isEditMode ? `<button class="btn-icon-small btn-delete-small" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">🗑️</button>` : ''}
       </div>
     `;
     
@@ -524,13 +525,20 @@ function renderArtistsList() {
     if (artist.deathYear) dates.push(artist.deathYear);
     const datesStr = dates.join(' - ');
     
+    const portraitImg = artist.portrait ? 
+      `<img src="${artist.portrait}" alt="${artist.name}" class="artist-item-portrait">` : 
+      `<div class="artist-item-portrait-placeholder">👤</div>`;
+    
     return `
       <div class="artist-item ${currentArtistId === artist.id ? 'active' : ''}" 
            data-artist-id="${artist.id}"
            onclick="selectArtist(${artist.id})">
-        <div class="artist-item-name">${escapeHtml(artist.name || 'Sans nom')}</div>
-        ${datesStr ? `<div class="artist-item-dates">${datesStr}</div>` : ''}
-        ${artist.style ? `<div class="artist-item-style">${escapeHtml(artist.style)}</div>` : ''}
+        ${portraitImg}
+        <div class="artist-item-content">
+          <div class="artist-item-name">${escapeHtml(artist.name || 'Sans nom')}</div>
+          ${datesStr ? `<div class="artist-item-dates">${datesStr}</div>` : ''}
+          ${artist.style ? `<div class="artist-item-style">${escapeHtml(artist.style)}</div>` : ''}
+        </div>
       </div>
     `;
   }).join('');

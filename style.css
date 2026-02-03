@@ -244,7 +244,7 @@ body::before {
 }
 
 .artist-item {
-  padding: 16px 18px;
+  padding: 12px;
   background: var(--light-cream);
   border: 2px solid var(--beige);
   border-radius: 10px;
@@ -252,6 +252,39 @@ body::before {
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artist-item-portrait {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.artist-item-portrait-placeholder {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--beige) 0%, var(--cream) 100%);
+  border: 2px solid var(--beige);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--burgundy);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.artist-item-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .artist-item:hover {
@@ -581,27 +614,43 @@ body::before {
 
 .artwork-analysis-preview {
   position: absolute;
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 15px);
   left: 50%;
-  transform: translateX(-50%) scale(0.95);
-  background: var(--burgundy);
+  transform: translateX(-50%) scale(0.9);
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--dark-burgundy) 100%);
   color: var(--cream);
-  padding: 18px 22px;
-  border-radius: 10px;
-  max-width: 320px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  max-width: 380px;
+  min-width: 280px;
   font-size: 14px;
-  line-height: 1.7;
-  box-shadow: 0 8px 30px rgba(124, 29, 29, 0.6);
-  border: 2px solid var(--gold);
+  line-height: 1.8;
+  box-shadow: 0 10px 40px rgba(124, 29, 29, 0.7);
+  border: 3px solid var(--gold);
   z-index: 1000;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: pre-line;
+  text-align: left;
 }
 
 .artwork-card:hover .artwork-analysis-preview {
   opacity: 1;
   transform: translateX(-50%) scale(1);
+}
+
+.artwork-analysis-preview::before {
+  content: '📝 Analyse';
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--gold);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 8px;
 }
 
 .artwork-analysis-preview::after {
@@ -610,8 +659,8 @@ body::before {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 10px solid transparent;
-  border-top-color: var(--burgundy);
+  border: 12px solid transparent;
+  border-top-color: var(--dark-burgundy);
 }
 
 /* ==================== ARTIST EDITOR ==================== */
@@ -799,6 +848,32 @@ body::before {
 .btn-icon:hover {
   background: var(--burgundy);
   color: var(--cream);
+}
+
+.btn-icon-small {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.3s;
+  opacity: 0.5;
+}
+
+.btn-icon-small:hover {
+  opacity: 1;
+  background: rgba(124, 29, 29, 0.1);
+  transform: scale(1.15);
+}
+
+.btn-delete-small {
+  opacity: 0.4;
+}
+
+.btn-delete-small:hover {
+  opacity: 1;
+  background: rgba(165, 42, 42, 0.15);
 }
 
 /* ==================== MODALS ==================== */
