@@ -174,6 +174,11 @@ function setupEventListeners() {
   // Modal artwork
   document.getElementById('closeArtworkModal').addEventListener('click', closeArtworkModal);
   document.getElementById('saveArtworkBtn').addEventListener('click', saveArtwork);
+  
+  // Modal détails
+  document.getElementById('closeDetailsModal').addEventListener('click', () => {
+    document.getElementById('artworkDetailsModal').style.display = 'none';
+  });
 }
 
 // ==================== MODE SWITCHING ====================
@@ -589,6 +594,7 @@ async function saveArtwork() {
   
   const title = document.getElementById('artworkTitle').value.trim();
   const date = document.getElementById('artworkDate').value.trim();
+  const technique = document.getElementById('artworkTechnique').value.trim();
   const analysis = document.getElementById('artworkAnalysis').value.trim();
   const saveBtn = document.getElementById('saveArtworkBtn');
   const editId = saveBtn.dataset.editId;
@@ -611,6 +617,7 @@ async function saveArtwork() {
     if (artwork) {
       artwork.title = title;
       artwork.date = date;
+      artwork.technique = technique;
       artwork.image = imagePreview.src;
       artwork.analysis = analysis;
       console.log('✅ Analyse sauvegardée:', analysis);
@@ -627,6 +634,7 @@ async function saveArtwork() {
       id: Date.now(),
       title: title,
       date: date,
+      technique: technique,
       image: imagePreview.src,
       analysis: analysis
     };
@@ -661,6 +669,7 @@ function editArtworkAnalysis(artworkId) {
   // Pré-remplir avec les données existantes
   document.getElementById('artworkTitle').value = artwork.title;
   document.getElementById('artworkDate').value = artwork.date || '';
+  document.getElementById('artworkTechnique').value = artwork.technique || '';
   document.getElementById('artworkAnalysis').value = artwork.analysis || '';
   
   // Afficher l'image
@@ -674,6 +683,31 @@ function editArtworkAnalysis(artworkId) {
   // Stocker l'ID de l'artwork en cours d'édition
   saveBtn.dataset.editId = String(artworkId);
   console.log('📝 Édition œuvre:', artwork.title, 'ID:', artworkId);
+}
+
+function showArtworkDetails(artworkId) {
+  const artist = artists.find(a => a.id === currentArtistId);
+  if (!artist) return;
+  
+  const artwork = artist.artworks.find(aw => String(aw.id) === String(artworkId));
+  if (!artwork) return;
+  
+  // Remplir le modal
+  document.getElementById('detailsTitle').textContent = artwork.title;
+  document.getElementById('detailsImage').src = artwork.image;
+  document.getElementById('detailsImage').alt = artwork.title;
+  
+  // Infos (date + technique)
+  let infoHTML = '';
+  if (artwork.date) infoHTML += `<div><strong>📅 Date :</strong> ${artwork.date}</div>`;
+  if (artwork.technique) infoHTML += `<div style="margin-top: 8px;"><strong>🎨 Technique :</strong> ${artwork.technique}</div>`;
+  document.getElementById('detailsInfo').innerHTML = infoHTML;
+  
+  // Analyse
+  document.getElementById('detailsAnalysis').textContent = artwork.analysis || 'Aucune analyse disponible.';
+  
+  // Afficher le modal
+  document.getElementById('artworkDetailsModal').style.display = 'flex';
 }
 
 async function deleteArtwork(artworkId) {
@@ -760,9 +794,13 @@ function renderArtworks(artist) {
     
     return `
       <div class="artwork-card">
-        ${analysisPreview}
         ${statsBadge}
-        <img src="${artwork.image}" alt="${artwork.title}" class="artwork-image">
+        <img src="${artwork.image}" 
+             alt="${artwork.title}" 
+             class="artwork-image" 
+             onclick="showArtworkDetails(${artwork.id})"
+             style="cursor: pointer;"
+             title="Cliquer pour voir les détails">
         <div class="artwork-info">
           <div class="artwork-title">${escapeHtml(artwork.title)}</div>
           ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
@@ -957,6 +995,7 @@ async function repairAllData() {
           if (!artwork.image) artwork.image = '';
           if (!artwork.analysis) artwork.analysis = '';
           if (!artwork.date) artwork.date = '';
+          if (!artwork.technique) artwork.technique = '';
           
           // Vérifier la structure des stats
           if (!artwork.stats) {
@@ -1367,3 +1406,4 @@ function loadFromLocalStorage() {
 window.selectArtist = selectArtist;
 window.editArtworkAnalysis = editArtworkAnalysis;
 window.deleteArtwork = deleteArtwork;
+window.showArtworkDetails = showArtworkDetails;

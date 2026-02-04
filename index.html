@@ -213,6 +213,11 @@
         </div>
 
         <div class="form-group">
+          <label for="artworkTechnique">🎨 Moyen / Technique</label>
+          <input type="text" id="artworkTechnique" placeholder="Ex: Huile sur toile, 162 × 210 cm">
+        </div>
+
+        <div class="form-group">
           <label for="artworkAnalysis">Analyse de l'œuvre</label>
           <textarea id="artworkAnalysis" rows="6" placeholder="Votre analyse : composition, couleurs, contexte historique, symbolique..."></textarea>
         </div>
@@ -227,6 +232,32 @@
 
   <!-- Toast notifications -->
   <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Modal détails œuvre -->
+  <div id="artworkDetailsModal" class="popup-overlay" style="display: none;">
+    <div class="popup-content" style="max-width: 900px;">
+      <button id="closeDetailsModal" class="close-popup">✕</button>
+      <h2 id="detailsTitle">Titre de l'œuvre</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+        <!-- Image -->
+        <div>
+          <img id="detailsImage" src="" alt="" style="width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          <div id="detailsInfo" style="margin-top: 15px; color: var(--burgundy); font-size: 14px;"></div>
+        </div>
+        
+        <!-- Analyse -->
+        <div>
+          <h3 style="color: var(--burgundy); margin-bottom: 15px;">📝 Analyse</h3>
+          <div id="detailsAnalysis" style="line-height: 1.8; color: #333; white-space: pre-line;"></div>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="margin-top: 30px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('closeDetailsModal').click()">Fermer</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
