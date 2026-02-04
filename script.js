@@ -785,17 +785,11 @@ function renderArtworks(artist) {
       suggestionBadge = `<div class="artwork-suggestion">${suggestion}</div>`;
     }
     
-    const actionButtons = `
-      <div class="artwork-actions">
-        <button class="btn-icon-small" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
-        ${isEditMode ? `<button class="btn-icon-small btn-delete-small" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">🗑️</button>` : ''}
-      </div>
-    `;
-    
     return `
       <div class="artwork-card">
-        ${statsBadge}
         <button class="btn-delete-artwork" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">✕</button>
+        <button class="btn-edit-artwork" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
+        ${statsBadge}
         <img src="${artwork.image}" 
              alt="${artwork.title}" 
              class="artwork-image" 
@@ -807,7 +801,6 @@ function renderArtworks(artist) {
           ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
           ${suggestionBadge}
         </div>
-        ${actionButtons}
       </div>
     `;
   }).join('');

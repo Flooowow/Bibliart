@@ -604,7 +604,6 @@ body::before {
   border: 3px solid var(--beige);
   border-radius: 12px;
   overflow: hidden;
-  cursor: pointer;
   transition: all 0.3s;
   position: relative;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -619,7 +618,7 @@ body::before {
 .artwork-stats-badge {
   position: absolute;
   top: 12px;
-  right: 12px;
+  right: 52px;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -670,6 +669,33 @@ body::before {
   color: white;
   transform: scale(1.1) rotate(90deg);
   box-shadow: 0 5px 15px rgba(211, 47, 47, 0.5);
+}
+
+.btn-edit-artwork {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  color: var(--burgundy);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  transition: all 0.3s;
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+}
+
+.btn-edit-artwork:hover {
+  background: var(--gold);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5);
 }
 
 .artwork-suggestion {
