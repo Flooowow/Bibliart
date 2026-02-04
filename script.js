@@ -30,6 +30,7 @@ function setupEventListeners() {
   // Import/Export
   document.getElementById('importStatsBtn').addEventListener('click', openImportStatsModal);
   document.getElementById('recompressBtn').addEventListener('click', recompressAllImages);
+  document.getElementById('ultraCompressBtn').addEventListener('click', ultraCompressAllImages);
   document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
   document.getElementById('exportBtn').addEventListener('click', exportToFile);
   
@@ -390,7 +391,7 @@ function handlePortraitUpload(e) {
 
   showToast('⏳ Compression de l\'image...', 'info');
 
-  compressImage(file, 800, 0.85)
+  compressImage(file, 600, 0.75)
     .then(compressedBase64 => {
       const artist = artists.find(a => a.id === currentArtistId);
       if (artist) {
@@ -441,7 +442,7 @@ function handleArtworkImageUpload(e) {
 
   showToast('⏳ Compression de l\'image...', 'info');
 
-  compressImage(file, 1200, 0.85)
+  compressImage(file, 900, 0.75)
     .then(compressedBase64 => {
       document.getElementById('artworkImagePreview').innerHTML = 
         `<img src="${compressedBase64}" alt="Œuvre">`;
@@ -761,6 +762,74 @@ function escapeHtml(text) {
 }
 
 // ==================== RECOMPRESSION ====================
+async function ultraCompressAllImages() {
+  const confirmed = await showConfirm(
+    '🔥 Ultra compression ?',
+    'Cette compression EXTRÊME va réduire drastiquement la taille des images (qualité 60%, max 800px). La qualité visuelle sera réduite mais l\'espace gagné sera maximal. Voulez-vous continuer ?'
+  );
+  
+  if (!confirmed) return;
+  
+  showToast('🔥 ULTRA compression en cours... Ne fermez pas la page !', 'info');
+  
+  let totalCompressed = 0;
+  let errors = 0;
+  
+  try {
+    // Recompresser les portraits
+    for (let artist of artists) {
+      if (artist.portrait && artist.portrait.startsWith('data:image')) {
+        try {
+          const compressed = await recompressBase64(artist.portrait, 600, 0.6);
+          if (compressed) {
+            artist.portrait = compressed;
+            totalCompressed++;
+          }
+        } catch (e) {
+          console.error('Erreur compression portrait:', e);
+          errors++;
+        }
+      }
+      
+      // Recompresser les œuvres
+      if (artist.artworks) {
+        for (let artwork of artist.artworks) {
+          if (artwork.image && artwork.image.startsWith('data:image')) {
+            try {
+              const compressed = await recompressBase64(artwork.image, 800, 0.6);
+              if (compressed) {
+                artwork.image = compressed;
+                totalCompressed++;
+              }
+            } catch (e) {
+              console.error('Erreur compression œuvre:', e);
+              errors++;
+            }
+          }
+        }
+      }
+    }
+    
+    saveToLocalStorage();
+    renderArtistsList();
+    
+    if (currentArtistId) {
+      if (isEditMode) {
+        showArtistEditor();
+      } else {
+        showArtistCard();
+      }
+    }
+    
+    showToast(`🔥 ${totalCompressed} images ULTRA compressées ! ${errors > 0 ? `(${errors} erreurs)` : ''}`, 'success');
+    checkStorageQuota();
+    
+  } catch (error) {
+    console.error('Erreur ultra compression:', error);
+    showToast('❌ Erreur lors de la compression', 'error');
+  }
+}
+
 async function recompressAllImages() {
   const confirmed = await showConfirm(
     'Recompresser toutes les images ?',
