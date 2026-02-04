@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFromLocalStorage();
   setupEventListeners();
   renderArtistsList();
+  checkStorageQuota(); // Vérifier l'espace au démarrage
   
   // Afficher l'état vide si aucun artiste
   if (artists.length === 0) {
@@ -136,6 +137,63 @@ function showConfirm(title, message) {
       overlay.removeEventListener('click', handleNo);
     }
   });
+}
+
+// ==================== IMAGE COMPRESSION ====================
+function compressImage(file, maxWidth = 1200, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Redimensionner si trop grande
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compresser en JPEG avec qualité réduite
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedBase64);
+      };
+      
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function checkStorageQuota() {
+  try {
+    const totalSize = new Blob(Object.values(localStorage)).size;
+    const limitMB = 5; // Limite approximative du localStorage
+    const usedMB = totalSize / (1024 * 1024);
+    
+    if (usedMB > limitMB * 0.8) {
+      showToast(`⚠️ Espace stockage : ${usedMB.toFixed(1)}/${limitMB}MB - Pensez à exporter !`, 'info');
+    }
+    
+    if (usedMB > limitMB * 0.95) {
+      showToast('🚨 ATTENTION : Limite de stockage presque atteinte ! Exportez vos données !', 'error');
+    }
+  } catch (e) {
+    console.error('Erreur vérification quota:', e);
+  }
 }
 
 // ==================== ARTIST MANAGEMENT ====================
@@ -325,16 +383,30 @@ function handlePortraitUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const artist = artists.find(a => a.id === currentArtistId);
-    if (artist) {
-      artist.portrait = event.target.result;
-      document.getElementById('editPortraitPreview').innerHTML = 
-        `<img src="${event.target.result}" alt="Portrait">`;
-    }
-  };
-  reader.readAsDataURL(file);
+  if (!file.type.startsWith('image/')) {
+    showToast('❌ Veuillez sélectionner une image', 'error');
+    return;
+  }
+
+  showToast('⏳ Compression de l\'image...', 'info');
+
+  compressImage(file, 800, 0.85)
+    .then(compressedBase64 => {
+      const artist = artists.find(a => a.id === currentArtistId);
+      if (artist) {
+        artist.portrait = compressedBase64;
+        document.getElementById('editPortraitPreview').innerHTML = 
+          `<img src="${compressedBase64}" alt="Portrait">`;
+        saveToLocalStorage();
+        renderArtistsList();
+        showToast('✅ Image compressée', 'success');
+        checkStorageQuota();
+      }
+    })
+    .catch(error => {
+      console.error('Erreur compression:', error);
+      showToast('❌ Erreur lors de la compression', 'error');
+    });
 }
 
 // ==================== ARTWORKS MANAGEMENT ====================
@@ -362,12 +434,23 @@ function handleArtworkImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    document.getElementById('artworkImagePreview').innerHTML = 
-      `<img src="${event.target.result}" alt="Œuvre">`;
-  };
-  reader.readAsDataURL(file);
+  if (!file.type.startsWith('image/')) {
+    showToast('❌ Veuillez sélectionner une image', 'error');
+    return;
+  }
+
+  showToast('⏳ Compression de l\'image...', 'info');
+
+  compressImage(file, 1200, 0.85)
+    .then(compressedBase64 => {
+      document.getElementById('artworkImagePreview').innerHTML = 
+        `<img src="${compressedBase64}" alt="Œuvre">`;
+      showToast('✅ Image compressée', 'success');
+    })
+    .catch(error => {
+      console.error('Erreur compression:', error);
+      showToast('❌ Erreur lors de la compression', 'error');
+    });
 }
 
 function saveArtwork() {
@@ -970,9 +1053,14 @@ function exportToFile() {
 function saveToLocalStorage() {
   try {
     localStorage.setItem('bibliart-artists', JSON.stringify(artists));
+    checkStorageQuota();
   } catch (e) {
     console.error('Erreur de sauvegarde:', e);
-    showToast('⚠️ Erreur de sauvegarde', 'error');
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      showToast('🚨 LIMITE DÉPASSÉE ! Exportez vos données puis supprimez des images/artistes.', 'error');
+    } else {
+      showToast('⚠️ Erreur de sauvegarde', 'error');
+    }
   }
 }
 
