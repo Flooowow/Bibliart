@@ -605,14 +605,19 @@ async function saveArtwork() {
   }
   
   if (editId) {
-    // Mode édition
-    const artwork = artist.artworks.find(aw => aw.id === parseInt(editId));
+    // Mode édition - comparer en string pour éviter les problèmes de précision
+    const artwork = artist.artworks.find(aw => String(aw.id) === String(editId));
     if (artwork) {
       artwork.title = title;
       artwork.date = date;
       artwork.image = imagePreview.src;
       artwork.analysis = analysis;
+      console.log('✅ Analyse sauvegardée:', analysis);
       showToast('✅ Œuvre mise à jour !', 'success');
+    } else {
+      console.error('❌ Œuvre non trouvée, editId:', editId);
+      showToast('❌ Erreur: œuvre non trouvée', 'error');
+      return;
     }
     delete saveBtn.dataset.editId;
   } else {
@@ -643,8 +648,11 @@ function editArtworkAnalysis(artworkId) {
   const artist = artists.find(a => a.id === currentArtistId);
   if (!artist) return;
   
-  const artwork = artist.artworks.find(aw => aw.id === artworkId);
-  if (!artwork) return;
+  const artwork = artist.artworks.find(aw => String(aw.id) === String(artworkId));
+  if (!artwork) {
+    console.error('❌ Œuvre non trouvée, ID:', artworkId);
+    return;
+  }
   
   // Ouvrir le modal en mode édition
   document.getElementById('artworkModal').style.display = 'flex';
@@ -663,7 +671,8 @@ function editArtworkAnalysis(artworkId) {
   saveBtn.textContent = '💾 Mettre à jour';
   
   // Stocker l'ID de l'artwork en cours d'édition
-  saveBtn.dataset.editId = artworkId;
+  saveBtn.dataset.editId = String(artworkId);
+  console.log('📝 Édition œuvre:', artwork.title, 'ID:', artworkId);
 }
 
 async function deleteArtwork(artworkId) {
