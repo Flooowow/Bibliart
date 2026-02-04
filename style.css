@@ -407,6 +407,63 @@ body::before {
   border-radius: 10px;
   border: 4px solid var(--gold);
   box-shadow: 0 8px 25px rgba(124, 29, 29, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.artist-portrait:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 35px rgba(124, 29, 29, 0.5);
+}
+
+.artist-bio-preview {
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  background: linear-gradient(135deg, var(--burgundy) 0%, var(--dark-burgundy) 100%);
+  color: var(--cream);
+  padding: 20px 24px;
+  border-radius: 12px;
+  max-width: 400px;
+  min-width: 300px;
+  font-size: 14px;
+  line-height: 1.8;
+  box-shadow: 0 10px 40px rgba(124, 29, 29, 0.7);
+  border: 3px solid var(--gold);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.artist-portrait-container:hover .artist-bio-preview {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.artist-bio-preview::before {
+  content: '📖 Biographie';
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--gold);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 8px;
+}
+
+.artist-bio-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 12px solid transparent;
+  border-bottom-color: var(--dark-burgundy);
 }
 
 .portrait-placeholder {
@@ -576,6 +633,46 @@ body::before {
   border-color: var(--burgundy);
   transform: translateY(-6px);
   box-shadow: 0 12px 30px rgba(124, 29, 29, 0.25);
+}
+
+.artwork-stats-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 2px solid white;
+}
+
+.artwork-stats-badge.stats-high {
+  background: linear-gradient(135deg, #2D5016 0%, #3A6B1E 100%);
+  color: var(--cream);
+}
+
+.artwork-stats-badge.stats-medium {
+  background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+  color: white;
+}
+
+.artwork-stats-badge.stats-low {
+  background: linear-gradient(135deg, #A52A2A 0%, #8B0000 100%);
+  color: white;
+}
+
+.artwork-suggestion {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--burgundy);
+  text-align: center;
 }
 
 .artwork-image {

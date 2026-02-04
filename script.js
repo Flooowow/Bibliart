@@ -28,6 +28,7 @@ function setupEventListeners() {
   
   // Import/Export
   document.getElementById('importQuizArtBtn').addEventListener('click', openImportQuizArtModal);
+  document.getElementById('importStatsBtn').addEventListener('click', openImportStatsModal);
   document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
   document.getElementById('exportBtn').addEventListener('click', exportToFile);
   
@@ -227,10 +228,24 @@ function showArtistCard() {
   // Portrait
   const portraitImg = document.getElementById('artistPortrait');
   const portraitPlaceholder = document.querySelector('.portrait-placeholder');
+  const portraitContainer = document.querySelector('.artist-portrait-container');
+  
+  // Retirer l'ancien popup s'il existe
+  const oldPreview = portraitContainer.querySelector('.artist-bio-preview');
+  if (oldPreview) oldPreview.remove();
+  
   if (artist.portrait) {
     portraitImg.src = artist.portrait;
     portraitImg.style.display = 'block';
     portraitPlaceholder.style.display = 'none';
+    
+    // Ajouter le popup de biographie si elle existe
+    if (artist.bio) {
+      const bioPreview = document.createElement('div');
+      bioPreview.className = 'artist-bio-preview';
+      bioPreview.textContent = artist.bio;
+      portraitContainer.appendChild(bioPreview);
+    }
   } else {
     portraitImg.style.display = 'none';
     portraitPlaceholder.style.display = 'flex';
@@ -489,6 +504,44 @@ function renderArtworks(artist) {
       `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis)}</div>` : 
       `<div class="artwork-analysis-preview">Aucune analyse pour cette œuvre</div>`;
     
+    // Calculer le badge de stats
+    let statsBadge = '';
+    let suggestionBadge = '';
+    
+    if (artwork.stats && artwork.stats.played > 0) {
+      const rate = artwork.stats.successRate;
+      let colorClass = 'stats-low';
+      if (rate >= 80) colorClass = 'stats-high';
+      else if (rate >= 50) colorClass = 'stats-medium';
+      
+      statsBadge = `<div class="artwork-stats-badge ${colorClass}">${rate}%</div>`;
+      
+      // Générer des suggestions intelligentes
+      const artistRate = artwork.stats.played > 0 ? Math.round((artwork.stats.artistCorrect / artwork.stats.played) * 100) : 0;
+      const titleRate = artwork.stats.played > 0 ? Math.round((artwork.stats.titleCorrect / artwork.stats.played) * 100) : 0;
+      const dateRate = artwork.stats.played > 0 ? Math.round((artwork.stats.dateCorrect / artwork.stats.played) * 100) : 0;
+      
+      let suggestion = '';
+      if (rate < 50) {
+        suggestion = '⚠️ À retravailler';
+      } else if (rate < 80) {
+        const weakest = Math.min(artistRate, titleRate, dateRate);
+        if (weakest === dateRate && dateRate < 70) {
+          suggestion = '📅 Revoir les dates';
+        } else if (weakest === artistRate && artistRate < 70) {
+          suggestion = '👤 Revoir l\'artiste';
+        } else if (weakest === titleRate && titleRate < 70) {
+          suggestion = '🎨 Revoir le titre';
+        } else {
+          suggestion = '💪 Continue !';
+        }
+      } else {
+        suggestion = '✨ Bien maîtrisé';
+      }
+      
+      suggestionBadge = `<div class="artwork-suggestion">${suggestion}</div>`;
+    }
+    
     const actionButtons = `
       <div class="artwork-actions">
         <button class="btn-icon-small" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
@@ -499,10 +552,12 @@ function renderArtworks(artist) {
     return `
       <div class="artwork-card">
         ${analysisPreview}
+        ${statsBadge}
         <img src="${artwork.image}" alt="${artwork.title}" class="artwork-image">
         <div class="artwork-info">
           <div class="artwork-title">${escapeHtml(artwork.title)}</div>
           ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
+          ${suggestionBadge}
         </div>
         ${actionButtons}
       </div>
@@ -652,6 +707,109 @@ function openImportBibliartModal() {
   };
   
   input.click();
+}
+
+function openImportStatsModal() {
+  // Créer un input file temporaire
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const quizartData = JSON.parse(text);
+      
+      // Confirmer l'import
+      const confirmed = await showConfirm(
+        'Importer les statistiques QuizArt ?',
+        `Cette action va ajouter les statistiques de vos quiz aux œuvres correspondantes. Les fiches artistes ne seront pas modifiées. Continuer ?`
+      );
+      
+      if (!confirmed) return;
+      
+      importStatsFromQuizArt(quizartData);
+      
+    } catch (error) {
+      console.error('Erreur d\'import:', error);
+      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+    }
+  };
+  
+  input.click();
+}
+
+function importStatsFromQuizArt(quizartData) {
+  // Gérer la structure QuizArt (objet avec propriété cards)
+  let quizartCards = [];
+  
+  if (Array.isArray(quizartData)) {
+    quizartCards = quizartData;
+  } else if (quizartData.cards && Array.isArray(quizartData.cards)) {
+    quizartCards = quizartData.cards;
+  } else {
+    showToast('❌ Format de fichier invalide', 'error');
+    return;
+  }
+  
+  let statsUpdated = 0;
+  let statsAdded = 0;
+  
+  // Pour chaque carte QuizArt
+  quizartCards.forEach(quizCard => {
+    if (!quizCard.artist || !quizCard.title) return;
+    
+    // Trouver l'artiste correspondant dans Bibliart
+    const artist = artists.find(a => 
+      a.name && a.name.toLowerCase() === quizCard.artist.toLowerCase()
+    );
+    
+    if (!artist) return;
+    
+    // Trouver l'œuvre correspondante
+    const artwork = artist.artworks.find(aw => 
+      aw.title && aw.title.toLowerCase() === quizCard.title.toLowerCase()
+    );
+    
+    if (artwork) {
+      // Ajouter/mettre à jour les stats
+      artwork.stats = {
+        played: quizCard.stats?.played || 0,
+        correct: quizCard.stats?.correct || 0,
+        wrong: quizCard.stats?.wrong || 0,
+        successRate: quizCard.stats?.successRate || 0,
+        artistCorrect: quizCard.stats?.artistCorrect || 0,
+        titleCorrect: quizCard.stats?.titleCorrect || 0,
+        dateCorrect: quizCard.stats?.dateCorrect || 0
+      };
+      
+      if (quizCard.stats && quizCard.stats.played > 0) {
+        statsUpdated++;
+      } else {
+        statsAdded++;
+      }
+    }
+  });
+  
+  saveToLocalStorage();
+  
+  if (statsUpdated > 0 || statsAdded > 0) {
+    showToast(`✅ Stats importées ! ${statsUpdated + statsAdded} œuvres mises à jour`, 'success');
+    
+    // Rafraîchir l'affichage si on est sur une fiche artiste
+    if (currentArtistId) {
+      if (isEditMode) {
+        showArtistEditor();
+      } else {
+        showArtistCard();
+      }
+    }
+  } else {
+    showToast('ℹ️ Aucune correspondance trouvée', 'info');
+  }
 }
 
 function importFromBibliart(bibliartData) {
