@@ -582,7 +582,7 @@ function handleArtworkImageUpload(e) {
     });
 }
 
-function saveArtwork() {
+async function saveArtwork() {
   const artist = artists.find(a => a.id === currentArtistId);
   if (!artist) return;
   
@@ -628,7 +628,7 @@ function saveArtwork() {
     showToast('✅ Œuvre ajoutée !', 'success');
   }
   
-  saveToLocalStorage();
+  await saveToLocalStorage();
   closeArtworkModal();
   
   // Rafraîchir l'affichage
