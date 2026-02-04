@@ -3,16 +3,138 @@ let artists = [];
 let currentArtistId = null;
 let isEditMode = false;
 
+// ==================== IndexedDB Setup ====================
+const DB_NAME = 'BibliartDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'artists';
+let db = null;
+
+// Initialiser IndexedDB
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+    
+    request.onupgradeneeded = (event) => {
+      db = event.target.result;
+      
+      // Créer le store s'il n'existe pas
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+// Sauvegarder dans IndexedDB
+async function saveToIndexedDB() {
+  try {
+    if (!db) await initDB();
+    
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    
+    // Supprimer toutes les anciennes données
+    store.clear();
+    
+    // Ajouter tous les artistes
+    for (const artist of artists) {
+      store.add(artist);
+    }
+    
+    return new Promise((resolve, reject) => {
+      transaction.oncomplete = () => {
+        console.log('✅ Sauvegarde IndexedDB réussie');
+        resolve();
+      };
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde IndexedDB:', error);
+    showToast('❌ Erreur de sauvegarde', 'error');
+    throw error;
+  }
+}
+
+// Charger depuis IndexedDB
+async function loadFromIndexedDB() {
+  try {
+    if (!db) await initDB();
+    
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => {
+        artists = request.result || [];
+        console.log(`✅ ${artists.length} artistes chargés depuis IndexedDB`);
+        resolve(artists);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('❌ Erreur chargement IndexedDB:', error);
+    artists = [];
+    return artists;
+  }
+}
+
+// Migrer depuis localStorage vers IndexedDB
+async function migrateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem('bibliart-artists');
+    if (!saved) return false;
+    
+    console.log('🔄 Migration localStorage → IndexedDB...');
+    
+    const oldArtists = JSON.parse(saved);
+    artists = oldArtists;
+    
+    await saveToIndexedDB();
+    
+    // Supprimer de localStorage après migration réussie
+    localStorage.removeItem('bibliart-artists');
+    
+    showToast('✅ Migration IndexedDB réussie ! Beaucoup plus d\'espace disponible.', 'success');
+    console.log('✅ Migration terminée');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur migration:', error);
+    return false;
+  }
+}
+
 // ==================== INITIALISATION ====================
-document.addEventListener('DOMContentLoaded', () => {
-  loadFromLocalStorage();
-  setupEventListeners();
-  renderArtistsList();
-  checkStorageQuota(); // Vérifier l'espace au démarrage
-  
-  // Afficher l'état vide si aucun artiste
-  if (artists.length === 0) {
-    showEmptyState();
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Initialiser la base de données
+    await initDB();
+    
+    // Vérifier s'il y a des données dans localStorage à migrer
+    const migrated = await migrateFromLocalStorage();
+    
+    // Charger les données depuis IndexedDB
+    if (!migrated) {
+      await loadFromIndexedDB();
+    }
+    
+    setupEventListeners();
+    renderArtistsList();
+    checkStorageQuota();
+    
+    // Afficher l'état vide si aucun artiste
+    if (artists.length === 0) {
+      showEmptyState();
+    }
+  } catch (error) {
+    console.error('❌ Erreur initialisation:', error);
+    showToast('❌ Erreur de chargement', 'error');
   }
 });
 
@@ -179,21 +301,27 @@ function compressImage(file, maxWidth = 1200, quality = 0.85) {
   });
 }
 
-function checkStorageQuota() {
+async function checkStorageQuota() {
   try {
-    const totalSize = new Blob(Object.values(localStorage)).size;
-    const limitMB = 5; // Limite approximative du localStorage
-    const usedMB = totalSize / (1024 * 1024);
-    
-    if (usedMB > limitMB * 0.8) {
-      showToast(`⚠️ Espace stockage : ${usedMB.toFixed(1)}/${limitMB}MB - Pensez à exporter !`, 'info');
-    }
-    
-    if (usedMB > limitMB * 0.95) {
-      showToast('🚨 ATTENTION : Limite de stockage presque atteinte ! Exportez vos données !', 'error');
+    // Pour IndexedDB, on vérifie l'API navigator.storage si disponible
+    if (navigator.storage && navigator.storage.estimate) {
+      const estimate = await navigator.storage.estimate();
+      const usedMB = estimate.usage / (1024 * 1024);
+      const quotaMB = estimate.quota / (1024 * 1024);
+      const percentUsed = (estimate.usage / estimate.quota) * 100;
+      
+      console.log(`📊 Stockage: ${usedMB.toFixed(1)}MB / ${quotaMB.toFixed(0)}MB (${percentUsed.toFixed(1)}%)`);
+      
+      if (percentUsed > 80) {
+        showToast(`⚠️ Espace : ${usedMB.toFixed(1)}MB / ${quotaMB.toFixed(0)}MB utilisés`, 'info');
+      }
+      
+      if (percentUsed > 95) {
+        showToast('🚨 Espace presque plein ! Exportez vos données.', 'error');
+      }
     }
   } catch (e) {
-    console.error('Erreur vérification quota:', e);
+    console.log('ℹ️ API Storage non disponible');
   }
 }
 
@@ -1104,30 +1232,14 @@ function exportToFile() {
 }
 
 // ==================== STORAGE ====================
-function saveToLocalStorage() {
-  try {
-    localStorage.setItem('bibliart-artists', JSON.stringify(artists));
-    checkStorageQuota();
-  } catch (e) {
-    console.error('Erreur de sauvegarde:', e);
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
-      showToast('🚨 LIMITE DÉPASSÉE ! Exportez vos données puis supprimez des images/artistes.', 'error');
-    } else {
-      showToast('⚠️ Erreur de sauvegarde', 'error');
-    }
-  }
+async function saveToLocalStorage() {
+  // Wrapper pour compatibilité - utilise maintenant IndexedDB
+  await saveToIndexedDB();
 }
 
 function loadFromLocalStorage() {
-  try {
-    const saved = localStorage.getItem('bibliart-artists');
-    if (saved) {
-      artists = JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Erreur de chargement:', e);
-    artists = [];
-  }
+  // Cette fonction n'est plus utilisée - migration auto au démarrage
+  console.log('⚠️ loadFromLocalStorage appelée - utiliser loadFromIndexedDB');
 }
 
 // Exposer les fonctions globales
