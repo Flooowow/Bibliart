@@ -287,6 +287,30 @@ body::before {
   min-width: 0;
 }
 
+.artist-stats-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.artist-stats-badge.artist-stats-high {
+  background: linear-gradient(135deg, #2D5016 0%, #3A6B1E 100%);
+  color: var(--cream);
+}
+
+.artist-stats-badge.artist-stats-medium {
+  background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+  color: white;
+}
+
+.artist-stats-badge.artist-stats-low {
+  background: linear-gradient(135deg, #A52A2A 0%, #8B0000 100%);
+  color: white;
+}
+
 .artist-item:hover {
   background: var(--beige);
   border-color: var(--burgundy);

@@ -584,6 +584,31 @@ function renderArtistsList() {
       `<img src="${artist.portrait}" alt="${artist.name}" class="artist-item-portrait">` : 
       `<div class="artist-item-portrait-placeholder">👤</div>`;
     
+    // Calculer les stats globales de l'artiste
+    let globalStats = '';
+    if (artist.artworks && artist.artworks.length > 0) {
+      let totalPlayed = 0;
+      let totalCorrect = 0;
+      let totalWorks = 0;
+      
+      artist.artworks.forEach(artwork => {
+        if (artwork.stats && artwork.stats.played > 0) {
+          totalPlayed += artwork.stats.played;
+          totalCorrect += artwork.stats.correct;
+          totalWorks++;
+        }
+      });
+      
+      if (totalWorks > 0 && totalPlayed > 0) {
+        const globalRate = Math.round((totalCorrect / totalPlayed) * 100);
+        let badgeClass = 'artist-stats-low';
+        if (globalRate >= 80) badgeClass = 'artist-stats-high';
+        else if (globalRate >= 50) badgeClass = 'artist-stats-medium';
+        
+        globalStats = `<div class="artist-stats-badge ${badgeClass}">${globalRate}%</div>`;
+      }
+    }
+    
     return `
       <div class="artist-item ${currentArtistId === artist.id ? 'active' : ''}" 
            data-artist-id="${artist.id}"
@@ -594,6 +619,7 @@ function renderArtistsList() {
           ${datesStr ? `<div class="artist-item-dates">${datesStr}</div>` : ''}
           ${artist.style ? `<div class="artist-item-style">${escapeHtml(artist.style)}</div>` : ''}
         </div>
+        ${globalStats}
       </div>
     `;
   }).join('');
@@ -624,9 +650,37 @@ function sortArtists() {
     case 'chrono-reverse':
       artists.sort((a, b) => (b.birthYear || 0) - (a.birthYear || 0));
       break;
+    case 'knowledge':
+      artists.sort((a, b) => {
+        // Calculer le taux de connaissance pour chaque artiste
+        const rateA = getArtistKnowledgeRate(a);
+        const rateB = getArtistKnowledgeRate(b);
+        return rateB - rateA; // Du mieux connu au moins connu
+      });
+      break;
   }
   
   renderArtistsList();
+}
+
+function getArtistKnowledgeRate(artist) {
+  if (!artist.artworks || artist.artworks.length === 0) return -1;
+  
+  let totalPlayed = 0;
+  let totalCorrect = 0;
+  let worksWithStats = 0;
+  
+  artist.artworks.forEach(artwork => {
+    if (artwork.stats && artwork.stats.played > 0) {
+      totalPlayed += artwork.stats.played;
+      totalCorrect += artwork.stats.correct;
+      worksWithStats++;
+    }
+  });
+  
+  if (worksWithStats === 0 || totalPlayed === 0) return -1;
+  
+  return Math.round((totalCorrect / totalPlayed) * 100);
 }
 
 // ==================== UTILS ====================
