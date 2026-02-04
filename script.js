@@ -795,6 +795,7 @@ function renderArtworks(artist) {
     return `
       <div class="artwork-card">
         ${statsBadge}
+        ${isEditMode ? `<button class="btn-delete-artwork" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">✕</button>` : ''}
         <img src="${artwork.image}" 
              alt="${artwork.title}" 
              class="artwork-image" 

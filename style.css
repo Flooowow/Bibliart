@@ -644,6 +644,34 @@ body::before {
   color: white;
 }
 
+.btn-delete-artwork {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #D32F2F;
+  border-radius: 50%;
+  color: #D32F2F;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  transition: all 0.3s;
+  box-shadow: 0 3px 10px rgba(211, 47, 47, 0.3);
+}
+
+.btn-delete-artwork:hover {
+  background: #D32F2F;
+  color: white;
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 5px 15px rgba(211, 47, 47, 0.5);
+}
+
 .artwork-suggestion {
   margin-top: 8px;
   padding: 6px 10px;
