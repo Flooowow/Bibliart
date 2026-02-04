@@ -228,24 +228,11 @@ function showArtistCard() {
   // Portrait
   const portraitImg = document.getElementById('artistPortrait');
   const portraitPlaceholder = document.querySelector('.portrait-placeholder');
-  const portraitContainer = document.querySelector('.artist-portrait-container');
-  
-  // Retirer l'ancien popup s'il existe
-  const oldPreview = portraitContainer.querySelector('.artist-bio-preview');
-  if (oldPreview) oldPreview.remove();
   
   if (artist.portrait) {
     portraitImg.src = artist.portrait;
     portraitImg.style.display = 'block';
     portraitPlaceholder.style.display = 'none';
-    
-    // Ajouter le popup de biographie si elle existe
-    if (artist.bio) {
-      const bioPreview = document.createElement('div');
-      bioPreview.className = 'artist-bio-preview';
-      bioPreview.textContent = artist.bio;
-      portraitContainer.appendChild(bioPreview);
-    }
   } else {
     portraitImg.style.display = 'none';
     portraitPlaceholder.style.display = 'flex';
