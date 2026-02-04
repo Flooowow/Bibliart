@@ -28,8 +28,7 @@ function setupEventListeners() {
   document.getElementById('addArtworkBtn').addEventListener('click', openArtworkModal);
   
   // Import/Export
-  document.getElementById('importQuizArtBtn').addEventListener('click', openImportQuizArtModal);
-  document.getElementById('importStatsBtn').addEventListener('click', openImportStatsModal);
+  document.getElementById('recompressBtn').addEventListener('click', recompressAllImages);
   document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
   document.getElementById('exportBtn').addEventListener('click', exportToFile);
   
@@ -760,40 +759,107 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ==================== IMPORT/EXPORT ====================
-function openImportQuizArtModal() {
-  // Créer un input file temporaire
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
+// ==================== RECOMPRESSION ====================
+async function recompressAllImages() {
+  const confirmed = await showConfirm(
+    'Recompresser toutes les images ?',
+    'Cette opération va recompresser tous les portraits et œuvres pour économiser de l\'espace. Cela peut prendre quelques minutes. Voulez-vous continuer ?'
+  );
   
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      const text = await file.text();
-      const quizartData = JSON.parse(text);
+  if (!confirmed) return;
+  
+  showToast('⏳ Recompression en cours... Ne fermez pas la page !', 'info');
+  
+  let totalCompressed = 0;
+  let errors = 0;
+  
+  try {
+    // Recompresser les portraits
+    for (let artist of artists) {
+      if (artist.portrait && artist.portrait.startsWith('data:image')) {
+        try {
+          const compressed = await recompressBase64(artist.portrait, 800, 0.85);
+          if (compressed) {
+            artist.portrait = compressed;
+            totalCompressed++;
+          }
+        } catch (e) {
+          console.error('Erreur compression portrait:', e);
+          errors++;
+        }
+      }
       
-      // Confirmer l'import
-      const confirmed = await showConfirm(
-        'Importer depuis QuizArt ?',
-        `Cette action va créer des fiches artistes à partir de votre sauvegarde QuizArt. ${quizartData.totalCards || quizartData.length || 0} cartes détectées. Continuer ?`
-      );
-      
-      if (!confirmed) return;
-      
-      importFromQuizArt(quizartData);
-      
-    } catch (error) {
-      console.error('Erreur d\'import:', error);
-      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+      // Recompresser les œuvres
+      if (artist.artworks) {
+        for (let artwork of artist.artworks) {
+          if (artwork.image && artwork.image.startsWith('data:image')) {
+            try {
+              const compressed = await recompressBase64(artwork.image, 1200, 0.85);
+              if (compressed) {
+                artwork.image = compressed;
+                totalCompressed++;
+              }
+            } catch (e) {
+              console.error('Erreur compression œuvre:', e);
+              errors++;
+            }
+          }
+        }
+      }
     }
-  };
-  
-  input.click();
+    
+    saveToLocalStorage();
+    renderArtistsList();
+    
+    if (currentArtistId) {
+      if (isEditMode) {
+        showArtistEditor();
+      } else {
+        showArtistCard();
+      }
+    }
+    
+    showToast(`✅ ${totalCompressed} images recompressées ! ${errors > 0 ? `(${errors} erreurs)` : ''}`, 'success');
+    checkStorageQuota();
+    
+  } catch (error) {
+    console.error('Erreur recompression:', error);
+    showToast('❌ Erreur lors de la recompression', 'error');
+  }
 }
 
+function recompressBase64(base64String, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      
+      // Redimensionner si trop grande
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Compresser en JPEG
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedBase64);
+    };
+    
+    img.onerror = reject;
+    img.src = base64String;
+  });
+}
+
+// ==================== IMPORT/EXPORT ====================
 function openImportBibliartModal() {
   // Créer un input file temporaire
   const input = document.createElement('input');
@@ -832,209 +898,6 @@ function openImportBibliartModal() {
   
   input.click();
 }
-
-function openImportStatsModal() {
-  // Créer un input file temporaire
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      const text = await file.text();
-      const quizartData = JSON.parse(text);
-      
-      // Confirmer l'import
-      const confirmed = await showConfirm(
-        'Importer les statistiques QuizArt ?',
-        `Cette action va ajouter les statistiques de vos quiz aux œuvres correspondantes. Les fiches artistes ne seront pas modifiées. Continuer ?`
-      );
-      
-      if (!confirmed) return;
-      
-      importStatsFromQuizArt(quizartData);
-      
-    } catch (error) {
-      console.error('Erreur d\'import:', error);
-      showToast('❌ Erreur lors de l\'import du fichier', 'error');
-    }
-  };
-  
-  input.click();
-}
-
-function importStatsFromQuizArt(quizartData) {
-  // Gérer la structure QuizArt (objet avec propriété cards)
-  let quizartCards = [];
-  
-  if (Array.isArray(quizartData)) {
-    quizartCards = quizartData;
-  } else if (quizartData.cards && Array.isArray(quizartData.cards)) {
-    quizartCards = quizartData.cards;
-  } else {
-    showToast('❌ Format de fichier invalide', 'error');
-    return;
-  }
-  
-  let statsUpdated = 0;
-  let statsAdded = 0;
-  
-  // Pour chaque carte QuizArt
-  quizartCards.forEach(quizCard => {
-    if (!quizCard.artist || !quizCard.title) return;
-    
-    // Trouver l'artiste correspondant dans Bibliart
-    const artist = artists.find(a => 
-      a.name && a.name.toLowerCase() === quizCard.artist.toLowerCase()
-    );
-    
-    if (!artist) return;
-    
-    // Trouver l'œuvre correspondante
-    const artwork = artist.artworks.find(aw => 
-      aw.title && aw.title.toLowerCase() === quizCard.title.toLowerCase()
-    );
-    
-    if (artwork) {
-      // Ajouter/mettre à jour les stats
-      artwork.stats = {
-        played: quizCard.stats?.played || 0,
-        correct: quizCard.stats?.correct || 0,
-        wrong: quizCard.stats?.wrong || 0,
-        successRate: quizCard.stats?.successRate || 0,
-        artistCorrect: quizCard.stats?.artistCorrect || 0,
-        titleCorrect: quizCard.stats?.titleCorrect || 0,
-        dateCorrect: quizCard.stats?.dateCorrect || 0
-      };
-      
-      if (quizCard.stats && quizCard.stats.played > 0) {
-        statsUpdated++;
-      } else {
-        statsAdded++;
-      }
-    }
-  });
-  
-  saveToLocalStorage();
-  
-  if (statsUpdated > 0 || statsAdded > 0) {
-    showToast(`✅ Stats importées ! ${statsUpdated + statsAdded} œuvres mises à jour`, 'success');
-    
-    // Rafraîchir l'affichage si on est sur une fiche artiste
-    if (currentArtistId) {
-      if (isEditMode) {
-        showArtistEditor();
-      } else {
-        showArtistCard();
-      }
-    }
-  } else {
-    showToast('ℹ️ Aucune correspondance trouvée', 'info');
-  }
-}
-
-function importFromBibliart(bibliartData) {
-  artists = bibliartData;
-  currentArtistId = null;
-  
-  saveToLocalStorage();
-  renderArtistsList();
-  
-  showToast(`✅ Import Bibliart réussi ! ${artists.length} artistes importés`, 'success');
-  
-  // Sélectionner le premier artiste
-  if (artists.length > 0) {
-    selectArtist(artists[0].id);
-  } else {
-    showEmptyState();
-  }
-}
-
-function importFromQuizArt(quizartData) {
-  // Gérer la structure QuizArt (objet avec propriété cards)
-  let quizartCards = [];
-  
-  if (Array.isArray(quizartData)) {
-    quizartCards = quizartData;
-  } else if (quizartData.cards && Array.isArray(quizartData.cards)) {
-    quizartCards = quizartData.cards;
-  } else {
-    showToast('❌ Format de fichier invalide', 'error');
-    return;
-  }
-  
-  let importCount = 0;
-  let artistsCreated = 0;
-  
-  // Grouper les cartes par artiste
-  const artistGroups = {};
-  
-  quizartCards.forEach(card => {
-    const artistName = card.artist;
-    if (!artistName) return;
-    
-    if (!artistGroups[artistName]) {
-      artistGroups[artistName] = [];
-    }
-    
-    artistGroups[artistName].push({
-      id: Date.now() + Math.random(),
-      title: card.title || 'Sans titre',
-      date: card.date || '',
-      image: card.image || '',
-      analysis: card.note || ''
-    });
-    
-    importCount++;
-  });
-  
-  // Créer les artistes
-  Object.keys(artistGroups).forEach(artistName => {
-    // Vérifier si l'artiste existe déjà
-    let artist = artists.find(a => a.name === artistName);
-    
-    if (!artist) {
-      // Créer un nouvel artiste
-      artist = {
-        id: Date.now() + Math.random(),
-        name: artistName,
-        birthYear: null,
-        deathYear: null,
-        birthplace: '',
-        style: '',
-        bio: '',
-        portrait: null,
-        artworks: []
-      };
-      artists.push(artist);
-      artistsCreated++;
-    }
-    
-    // Ajouter les œuvres (éviter les doublons)
-    artistGroups[artistName].forEach(artwork => {
-      const exists = artist.artworks.some(aw => 
-        aw.title === artwork.title && aw.date === artwork.date
-      );
-      if (!exists) {
-        artist.artworks.push(artwork);
-      }
-    });
-  });
-  
-  saveToLocalStorage();
-  renderArtistsList();
-  
-  showToast(`✅ Import réussi ! ${artistsCreated} artistes créés, ${importCount} œuvres importées`, 'success');
-  
-  // Sélectionner le premier artiste si aucun n'est sélectionné
-  if (!currentArtistId && artists.length > 0) {
-    selectArtist(artists[0].id);
-  }
-}
-
 function exportToFile() {
   const dataStr = JSON.stringify(artists, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
