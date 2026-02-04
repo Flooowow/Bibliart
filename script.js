@@ -28,6 +28,7 @@ function setupEventListeners() {
   document.getElementById('addArtworkBtn').addEventListener('click', openArtworkModal);
   
   // Import/Export
+  document.getElementById('importStatsBtn').addEventListener('click', openImportStatsModal);
   document.getElementById('recompressBtn').addEventListener('click', recompressAllImages);
   document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
   document.getElementById('exportBtn').addEventListener('click', exportToFile);
@@ -898,6 +899,127 @@ function openImportBibliartModal() {
   
   input.click();
 }
+
+function importFromBibliart(bibliartData) {
+  artists = bibliartData;
+  currentArtistId = null;
+  
+  saveToLocalStorage();
+  renderArtistsList();
+  
+  showToast(`✅ Import Bibliart réussi ! ${artists.length} artistes importés`, 'success');
+  
+  // Sélectionner le premier artiste
+  if (artists.length > 0) {
+    selectArtist(artists[0].id);
+  } else {
+    showEmptyState();
+  }
+}
+
+function openImportStatsModal() {
+  // Créer un input file temporaire
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const quizartData = JSON.parse(text);
+      
+      // Confirmer l'import
+      const confirmed = await showConfirm(
+        'Importer les statistiques QuizArt ?',
+        `Cette action va ajouter les statistiques de vos quiz aux œuvres correspondantes. Les fiches artistes ne seront pas modifiées. Continuer ?`
+      );
+      
+      if (!confirmed) return;
+      
+      importStatsFromQuizArt(quizartData);
+      
+    } catch (error) {
+      console.error('Erreur d\'import:', error);
+      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+    }
+  };
+  
+  input.click();
+}
+
+function importStatsFromQuizArt(quizartData) {
+  // Gérer la structure QuizArt (objet avec propriété cards)
+  let quizartCards = [];
+  
+  if (Array.isArray(quizartData)) {
+    quizartCards = quizartData;
+  } else if (quizartData.cards && Array.isArray(quizartData.cards)) {
+    quizartCards = quizartData.cards;
+  } else {
+    showToast('❌ Format de fichier invalide', 'error');
+    return;
+  }
+  
+  let statsUpdated = 0;
+  let statsAdded = 0;
+  
+  // Pour chaque carte QuizArt
+  quizartCards.forEach(quizCard => {
+    if (!quizCard.artist || !quizCard.title) return;
+    
+    // Trouver l'artiste correspondant dans Bibliart
+    const artist = artists.find(a => 
+      a.name && a.name.toLowerCase() === quizCard.artist.toLowerCase()
+    );
+    
+    if (!artist) return;
+    
+    // Trouver l'œuvre correspondante
+    const artwork = artist.artworks.find(aw => 
+      aw.title && aw.title.toLowerCase() === quizCard.title.toLowerCase()
+    );
+    
+    if (artwork) {
+      // Ajouter/mettre à jour les stats
+      artwork.stats = {
+        played: quizCard.stats?.played || 0,
+        correct: quizCard.stats?.correct || 0,
+        wrong: quizCard.stats?.wrong || 0,
+        successRate: quizCard.stats?.successRate || 0,
+        artistCorrect: quizCard.stats?.artistCorrect || 0,
+        titleCorrect: quizCard.stats?.titleCorrect || 0,
+        dateCorrect: quizCard.stats?.dateCorrect || 0
+      };
+      
+      if (quizCard.stats && quizCard.stats.played > 0) {
+        statsUpdated++;
+      } else {
+        statsAdded++;
+      }
+    }
+  });
+  
+  saveToLocalStorage();
+  
+  if (statsUpdated > 0 || statsAdded > 0) {
+    showToast(`✅ Stats importées ! ${statsUpdated + statsAdded} œuvres mises à jour`, 'success');
+    
+    // Rafraîchir l'affichage si on est sur une fiche artiste
+    if (currentArtistId) {
+      if (isEditMode) {
+        showArtistEditor();
+      } else {
+        showArtistCard();
+      }
+    }
+  } else {
+    showToast('ℹ️ Aucune correspondance trouvée', 'info');
+  }
+}
+
 function exportToFile() {
   const dataStr = JSON.stringify(artists, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
