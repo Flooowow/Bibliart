@@ -151,6 +151,7 @@ function setupEventListeners() {
   
   // Import/Export
   document.getElementById('importStatsBtn').addEventListener('click', openImportStatsModal);
+  document.getElementById('repairDataBtn').addEventListener('click', repairAllData);
   document.getElementById('recompressBtn').addEventListener('click', recompressAllImages);
   document.getElementById('ultraCompressBtn').addEventListener('click', ultraCompressAllImages);
   document.getElementById('importBibliartBtn').addEventListener('click', openImportBibliartModal);
@@ -896,6 +897,117 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ==================== DATA REPAIR ====================
+async function repairAllData() {
+  const confirmed = await showConfirm(
+    '🔧 Réparer les données ?',
+    'Cette opération va normaliser tous les IDs, vérifier la structure des données et corriger les problèmes. Recommandé après une migration ou un import. Continuer ?'
+  );
+  
+  if (!confirmed) return;
+  
+  showToast('🔧 Réparation en cours...', 'info');
+  
+  let artistsFixed = 0;
+  let artworksFixed = 0;
+  let idCounter = 1;
+  
+  try {
+    // Parcourir tous les artistes
+    for (let artist of artists) {
+      let artistChanged = false;
+      
+      // Réparer l'ID de l'artiste (utiliser un compteur simple)
+      const oldId = artist.id;
+      artist.id = idCounter++;
+      if (oldId !== artist.id) {
+        artistChanged = true;
+        // Mettre à jour currentArtistId si c'est l'artiste sélectionné
+        if (currentArtistId === oldId) {
+          currentArtistId = artist.id;
+        }
+      }
+      
+      // Vérifier les propriétés obligatoires
+      if (!artist.name) artist.name = 'Artiste sans nom';
+      if (!artist.artworks) artist.artworks = [];
+      if (artist.birthYear && typeof artist.birthYear === 'string') {
+        artist.birthYear = parseInt(artist.birthYear) || null;
+        artistChanged = true;
+      }
+      if (artist.deathYear && typeof artist.deathYear === 'string') {
+        artist.deathYear = parseInt(artist.deathYear) || null;
+        artistChanged = true;
+      }
+      
+      // Réparer les œuvres
+      if (artist.artworks && Array.isArray(artist.artworks)) {
+        let artworkIdCounter = 1;
+        for (let artwork of artist.artworks) {
+          let artworkChanged = false;
+          
+          // Réparer l'ID de l'œuvre
+          artwork.id = artworkIdCounter++;
+          artworkChanged = true;
+          
+          // Vérifier les propriétés obligatoires
+          if (!artwork.title) artwork.title = 'Sans titre';
+          if (!artwork.image) artwork.image = '';
+          if (!artwork.analysis) artwork.analysis = '';
+          if (!artwork.date) artwork.date = '';
+          
+          // Vérifier la structure des stats
+          if (!artwork.stats) {
+            artwork.stats = {
+              played: 0,
+              correct: 0,
+              wrong: 0,
+              successRate: 0,
+              artistCorrect: 0,
+              titleCorrect: 0,
+              dateCorrect: 0
+            };
+            artworkChanged = true;
+          } else {
+            // Vérifier que toutes les propriétés stats existent
+            if (typeof artwork.stats.played !== 'number') artwork.stats.played = 0;
+            if (typeof artwork.stats.correct !== 'number') artwork.stats.correct = 0;
+            if (typeof artwork.stats.wrong !== 'number') artwork.stats.wrong = 0;
+            if (typeof artwork.stats.successRate !== 'number') artwork.stats.successRate = 0;
+            if (typeof artwork.stats.artistCorrect !== 'number') artwork.stats.artistCorrect = 0;
+            if (typeof artwork.stats.titleCorrect !== 'number') artwork.stats.titleCorrect = 0;
+            if (typeof artwork.stats.dateCorrect !== 'number') artwork.stats.dateCorrect = 0;
+          }
+          
+          if (artworkChanged) artworksFixed++;
+        }
+      }
+      
+      if (artistChanged) artistsFixed++;
+    }
+    
+    // Sauvegarder
+    await saveToIndexedDB();
+    
+    // Rafraîchir l'affichage
+    renderArtistsList();
+    if (currentArtistId) {
+      if (isEditMode) {
+        showArtistEditor();
+      } else {
+        showArtistCard();
+      }
+    }
+    
+    showToast(`✅ Réparation terminée ! ${artistsFixed} artistes et ${artworksFixed} œuvres normalisés.`, 'success');
+    console.log('✅ Données réparées:', { artistsFixed, artworksFixed });
+    
+  } catch (error) {
+    console.error('❌ Erreur réparation:', error);
+    showToast('❌ Erreur lors de la réparation', 'error');
+  }
 }
 
 // ==================== RECOMPRESSION ====================
