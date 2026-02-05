@@ -1100,6 +1100,54 @@ body::before {
   backdrop-filter: blur(5px);
 }
 
+#artworkDetailsModal .popup-content {
+  background: var(--cream);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+#artworkDetailsModal h2 {
+  color: var(--burgundy);
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+#artworkDetailsModal h3 {
+  color: var(--burgundy);
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+#detailsImage {
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+#detailsInfo {
+  margin-top: 15px;
+  color: var(--burgundy) !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#detailsInfo strong {
+  color: var(--burgundy);
+  font-weight: 700;
+}
+
+#detailsAnalysis {
+  line-height: 1.8;
+  color: var(--anthracite) !important;
+  white-space: pre-line;
+  font-size: 15px;
+}
+
 .modal-confirm {
   position: relative;
   max-width: 460px;
