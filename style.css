@@ -645,7 +645,7 @@ body::before {
 
 .btn-delete-artwork {
   position: absolute;
-  bottom: 75px;
+  bottom: 12px;
   left: 12px;
   width: 32px;
   height: 32px;
@@ -673,7 +673,7 @@ body::before {
 
 .btn-edit-artwork {
   position: absolute;
-  bottom: 75px;
+  bottom: 12px;
   right: 12px;
   width: 32px;
   height: 32px;
