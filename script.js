@@ -686,11 +686,25 @@ function editArtworkAnalysis(artworkId) {
 }
 
 function showArtworkDetails(artworkId) {
+  console.log('🖱️ Clic sur artwork, ID:', artworkId);
+  console.log('🎨 Artiste actuel:', currentArtistId);
+  
   const artist = artists.find(a => a.id === currentArtistId);
-  if (!artist) return;
+  if (!artist) {
+    console.error('❌ Artiste non trouvé');
+    return;
+  }
+  
+  console.log('👤 Artiste trouvé:', artist.name);
   
   const artwork = artist.artworks.find(aw => String(aw.id) === String(artworkId));
-  if (!artwork) return;
+  if (!artwork) {
+    console.error('❌ Œuvre non trouvée, ID:', artworkId);
+    console.log('📋 Œuvres disponibles:', artist.artworks.map(aw => aw.id));
+    return;
+  }
+  
+  console.log('✅ Œuvre trouvée:', artwork.title);
   
   // Remplir le modal
   document.getElementById('detailsTitle').textContent = artwork.title;
@@ -708,6 +722,7 @@ function showArtworkDetails(artworkId) {
   
   // Afficher le modal
   document.getElementById('artworkDetailsModal').style.display = 'flex';
+  console.log('✅ Modal affiché');
 }
 
 async function deleteArtwork(artworkId) {
