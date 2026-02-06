@@ -238,7 +238,9 @@ function showConfirm(title, message) {
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMessage').textContent = message;
     
+    // S'assurer que la modal est bien au-dessus de tout
     modal.style.display = 'flex';
+    modal.style.zIndex = '99999';
     
     const handleYes = () => {
       modal.style.display = 'none';
@@ -258,12 +260,16 @@ function showConfirm(title, message) {
     
     yesBtn.addEventListener('click', handleYes);
     noBtn.addEventListener('click', handleNo);
-    overlay.addEventListener('click', handleNo);
+    if (overlay) {
+      overlay.addEventListener('click', handleNo);
+    }
     
     function cleanup() {
       yesBtn.removeEventListener('click', handleYes);
       noBtn.removeEventListener('click', handleNo);
-      overlay.removeEventListener('click', handleNo);
+      if (overlay) {
+        overlay.removeEventListener('click', handleNo);
+      }
     }
   });
 }
