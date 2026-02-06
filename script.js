@@ -552,6 +552,7 @@ function openArtworkModal() {
   document.getElementById('artworkImage').value = '';
   document.getElementById('artworkTitle').value = '';
   document.getElementById('artworkDate').value = '';
+  document.getElementById('artworkTechnique').value = '';
   document.getElementById('artworkAnalysis').value = '';
   document.getElementById('artworkImagePreview').innerHTML = '';
 }
@@ -1227,6 +1228,8 @@ function recompressBase64(base64String, maxWidth, quality) {
 }
 
 // ==================== IMPORT/EXPORT ====================
+
+// ✨ VERSION AMÉLIORÉE avec gestion d'erreurs détaillée
 function openImportBibliartModal() {
   // Créer un input file temporaire
   const input = document.createElement('input');
@@ -1237,29 +1240,123 @@ function openImportBibliartModal() {
     const file = e.target.files[0];
     if (!file) return;
     
+    showToast('📂 Lecture du fichier...', 'info');
+    
     try {
+      // Lire le fichier
       const text = await file.text();
-      const bibliartData = JSON.parse(text);
       
-      // Vérifier que c'est bien un export Bibliart
-      if (!Array.isArray(bibliartData)) {
-        showToast('❌ Format Bibliart invalide', 'error');
+      // Vérifier que le fichier n'est pas vide
+      if (!text || text.trim().length === 0) {
+        showToast('❌ Le fichier est vide', 'error');
+        console.error('❌ Fichier vide détecté');
         return;
+      }
+      
+      console.log('📄 Taille du fichier:', text.length, 'caractères');
+      console.log('📄 Début du fichier:', text.substring(0, 100));
+      
+      // Parser le JSON
+      let bibliartData;
+      try {
+        bibliartData = JSON.parse(text);
+        console.log('✅ JSON parsé avec succès');
+      } catch (parseError) {
+        console.error('❌ Erreur de parsing JSON:', parseError);
+        console.error('Position de l\'erreur:', parseError.message);
+        showToast(`❌ Fichier JSON invalide: ${parseError.message}`, 'error');
+        return;
+      }
+      
+      // Vérifier que c'est bien un export Bibliart (tableau d'artistes)
+      if (!Array.isArray(bibliartData)) {
+        console.error('❌ Format incorrect - pas un tableau:', typeof bibliartData);
+        console.log('Structure reçue:', Object.keys(bibliartData || {}));
+        showToast('❌ Format Bibliart invalide - doit être un tableau d\'artistes', 'error');
+        return;
+      }
+      
+      console.log(`📊 Nombre d'artistes trouvés: ${bibliartData.length}`);
+      
+      // Vérifier qu'il y a au moins un artiste
+      if (bibliartData.length === 0) {
+        showToast('⚠️ Le fichier ne contient aucun artiste', 'error');
+        return;
+      }
+      
+      // Valider la structure de base des artistes
+      let validArtists = 0;
+      let invalidArtists = 0;
+      let missingNames = 0;
+      let missingIds = 0;
+      
+      bibliartData.forEach((artist, index) => {
+        if (!artist || typeof artist !== 'object') {
+          invalidArtists++;
+          console.warn(`⚠️ Artiste invalide à l'index ${index}: pas un objet`);
+          return;
+        }
+        
+        if (!artist.id) {
+          missingIds++;
+          console.warn(`⚠️ Artiste à l'index ${index} sans ID`);
+        }
+        
+        if (!artist.name || artist.name.trim() === '') {
+          missingNames++;
+          console.warn(`⚠️ Artiste à l'index ${index} sans nom:`, artist);
+        } else {
+          validArtists++;
+          console.log(`✅ Artiste valide [${index}]: ${artist.name}`);
+        }
+        
+        // Vérifier la structure des œuvres
+        if (artist.artworks && Array.isArray(artist.artworks)) {
+          console.log(`   └─ ${artist.artworks.length} œuvre(s)`);
+        }
+      });
+      
+      console.log('📊 Résumé validation:');
+      console.log('   - Artistes valides:', validArtists);
+      console.log('   - Artistes invalides:', invalidArtists);
+      console.log('   - Sans nom:', missingNames);
+      console.log('   - Sans ID:', missingIds);
+      
+      if (validArtists === 0) {
+        showToast('❌ Aucun artiste valide trouvé dans le fichier', 'error');
+        return;
+      }
+      
+      // Afficher un avertissement si certains artistes sont invalides
+      let warningMessage = `${validArtists} artiste(s) valide(s) détecté(s).`;
+      if (invalidArtists > 0 || missingNames > 0) {
+        warningMessage += `\n⚠️ ${invalidArtists + missingNames} artiste(s) invalide(s) seront ignorés.`;
       }
       
       // Confirmer l'import
       const confirmed = await showConfirm(
         'Importer depuis Bibliart ?',
-        `Cette action va remplacer vos données actuelles. ${bibliartData.length} artistes détectés. Continuer ?`
+        `Cette action va remplacer vos données actuelles.\n\n${warningMessage}\n\nContinuer ?`
       );
       
-      if (!confirmed) return;
+      if (!confirmed) {
+        console.log('❌ Import annulé par l\'utilisateur');
+        return;
+      }
       
-      importFromBibliart(bibliartData);
+      // Filtrer uniquement les artistes valides
+      const validData = bibliartData.filter(artist => 
+        artist && typeof artist === 'object' && artist.name && artist.name.trim() !== ''
+      );
+      
+      console.log(`✅ ${validData.length} artistes valides à importer`);
+      
+      importFromBibliart(validData);
       
     } catch (error) {
-      console.error('Erreur d\'import:', error);
-      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+      console.error('❌ Erreur d\'import globale:', error);
+      console.error('Stack trace:', error.stack);
+      showToast(`❌ Erreur: ${error.message || 'Impossible de lire le fichier'}`, 'error');
     }
   };
   
@@ -1267,6 +1364,8 @@ function openImportBibliartModal() {
 }
 
 function importFromBibliart(bibliartData) {
+  console.log('🔄 Début de l\'import...');
+  
   artists = bibliartData;
   currentArtistId = null;
   
@@ -1274,10 +1373,12 @@ function importFromBibliart(bibliartData) {
   renderArtistsList();
   
   showToast(`✅ Import Bibliart réussi ! ${artists.length} artistes importés`, 'success');
+  console.log(`✅ ${artists.length} artistes importés avec succès`);
   
   // Sélectionner le premier artiste
   if (artists.length > 0) {
     selectArtist(artists[0].id);
+    console.log(`👤 Premier artiste sélectionné: ${artists[0].name}`);
   } else {
     showEmptyState();
   }
@@ -1293,9 +1394,26 @@ function openImportStatsModal() {
     const file = e.target.files[0];
     if (!file) return;
     
+    showToast('📂 Lecture du fichier...', 'info');
+    
     try {
       const text = await file.text();
-      const quizartData = JSON.parse(text);
+      
+      // Vérifier que le fichier n'est pas vide
+      if (!text || text.trim().length === 0) {
+        showToast('❌ Le fichier est vide', 'error');
+        return;
+      }
+      
+      // Parser le JSON
+      let quizartData;
+      try {
+        quizartData = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Erreur de parsing JSON:', parseError);
+        showToast(`❌ Le fichier JSON est invalide: ${parseError.message}`, 'error');
+        return;
+      }
       
       // Confirmer l'import
       const confirmed = await showConfirm(
@@ -1309,7 +1427,7 @@ function openImportStatsModal() {
       
     } catch (error) {
       console.error('Erreur d\'import:', error);
-      showToast('❌ Erreur lors de l\'import du fichier', 'error');
+      showToast(`❌ Erreur: ${error.message || 'Impossible de lire le fichier'}`, 'error');
     }
   };
   
@@ -1387,17 +1505,23 @@ function importStatsFromQuizArt(quizartData) {
 }
 
 function exportToFile() {
-  const dataStr = JSON.stringify(artists, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `bibliart-export-${new Date().toISOString().split('T')[0]}.json`;
-  link.click();
-  
-  URL.revokeObjectURL(url);
-  showToast('💾 Export réussi !', 'success');
+  try {
+    const dataStr = JSON.stringify(artists, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bibliart-export-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    showToast('💾 Export réussi !', 'success');
+    console.log('✅ Export terminé:', artists.length, 'artistes');
+  } catch (error) {
+    console.error('❌ Erreur export:', error);
+    showToast(`❌ Erreur lors de l'export: ${error.message}`, 'error');
+  }
 }
 
 // ==================== STORAGE ====================
