@@ -3,394 +3,179 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quizart - Histoire de l'Art</title>
+  <title>Bibliart - Votre bibliothèque d'histoire de l'art</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="achievements.css">
 </head>
 <body>
   <!-- Header -->
-  <header>
+  <header class="header">
     <div class="header-left">
-      <img src="logo.png" alt="QuizArt Logo" class="header-logo">
+      <div class="logo-container">
+        <img src="logo.png" alt="Bibliart" class="logo-img">
+      </div>
       <div class="header-text">
-        <h1>Quizart</h1>
-        <p class="tagline">Découvrez l'histoire de l'art autrement</p>
+        <h1>Bibliart</h1>
+        <p class="tagline">votre bibliothèque personnelle d'histoire de l'art</p>
       </div>
     </div>
-    <div class="mode-toggle">
-      <button id="editModeBtn" class="mode-btn active">✏️ Mode Édition</button>
-      <button id="quizModeBtn" class="mode-btn">🎯 Mode Quiz</button>
+    <div class="header-actions">
+      <button id="importStatsBtn" class="btn btn-secondary btn-small">📊 Stats QuizArt</button>
+      <button id="repairDataBtn" class="btn btn-secondary btn-small">🔧 Réparer données</button>
+      <button id="recompressBtn" class="btn btn-secondary btn-small">🔄 Recompresser</button>
+      <button id="ultraCompressBtn" class="btn btn-secondary btn-small">🔥 Ultra compression</button>
+      <button id="importBibliartBtn" class="btn btn-secondary btn-small">📂 Importer</button>
+      <button id="exportBtn" class="btn btn-secondary btn-small">💾 Exporter</button>
+      <div class="mode-toggle">
+        <button id="readModeBtn" class="mode-btn active">📖 Lecture</button>
+        <button id="editModeBtn" class="mode-btn">✏️ Édition</button>
+      </div>
+      <button id="saveBtn" class="btn btn-save" style="display: none;">💾 Sauvegarder</button>
     </div>
   </header>
 
-  <!-- MODE ÉDITION -->
-  <div id="editMode" class="mode-container active">
-    <div class="editor-layout">
-      <!-- Sidebar avec liste des cartes -->
-      <aside class="cards-sidebar">
-        <div class="sidebar-header">
-          <h2>📚 Cartes</h2>
-          
-          <!-- Statistiques globales -->
-          <div id="globalStats" class="global-stats">
-            <h3>📊 Mes statistiques</h3>
-            <div class="stats-mini-grid">
-              <div class="stat-mini-box">
-                <span class="stat-mini-number" id="globalTotalCards">0</span>
-                <span class="stat-mini-label">Cartes</span>
-              </div>
-              <div class="stat-mini-box">
-                <span class="stat-mini-number" id="globalToReview">0</span>
-                <span class="stat-mini-label">À réviser</span>
-              </div>
-              <div class="stat-mini-box">
-                <span class="stat-mini-number stat-success" id="globalSuccessRate">0%</span>
-                <span class="stat-mini-label">Taux global</span>
-              </div>
-              <div class="stat-mini-box">
-                <span class="stat-mini-number" style="color: var(--gold);" id="globalAvgMastery">0%</span>
-                <span class="stat-mini-label">🎯 Maîtrise moy.</span>
-              </div>
-              <div class="stat-mini-box stat-mini-full">
-                <span class="stat-mini-number" id="globalTotalTime">0h 0min</span>
-                <span class="stat-mini-label">⏱️ Temps total quiz</span>
-              </div>
-            </div>
-            <button id="viewSessionStatsBtn" class="btn btn-secondary btn-small" style="margin-top: 10px; width: 100%;">📊 Voir les sessions</button>
-          </div>
-          
-          <!-- Badge des succès -->
-          <div style="padding: 15px 0;">
-            <div class="achievements-badge" id="achievementsBadge" onclick="showAchievementsModal()">
-              <span class="achievements-badge-icon">🏆</span>
-              <span class="achievements-badge-count">
-                <span id="achievementsCount">0</span>/<span id="achievementsTotal">32</span>
-              </span>
-            </div>
-          </div>
-          
-          <div class="sidebar-controls">
-            <button id="addCardBtn" class="btn btn-primary">➕ Nouvelle carte</button>
-            <select id="sortSelect" class="sort-select">
-              <option value="order">Ordre par défaut</option>
-              <option value="date-asc">Date croissante</option>
-              <option value="date-desc">Date décroissante</option>
-              <option value="artist">Artiste A-Z</option>
-              <option value="mastery">🎯 Par maîtrise (priorité)</option>
-            </select>
-            
-            <div class="backup-controls">
-              <button id="exportBtn" class="btn btn-success btn-icon" title="Sauvegarder mes cartes">💾</button>
-              <button id="importBtn" class="btn btn-secondary btn-icon" title="Restaurer mes cartes">📂</button>
-              <input type="file" id="importFile" accept=".json" style="display: none;">
-              
-              <div class="maintenance-controls">
-                <button id="repairBtn" class="btn btn-secondary btn-icon" title="Réparer données">🔧</button>
-                <button id="recompressBtn" class="btn btn-secondary btn-icon" title="Recompresser">🔄</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="cardsList" class="cards-list">
-          <!-- Les cartes seront ajoutées ici dynamiquement -->
-        </div>
-      </aside>
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Artistes</h2>
+        <button id="addArtistBtn" class="btn btn-add" style="display: none;">➕ Ajouter</button>
+      </div>
 
-      <!-- Zone d'édition principale -->
-      <main class="editor-main">
-        <div id="editorContent" class="editor-content">
-          <div class="empty-state">
-            <div class="empty-icon">🎨</div>
-            <h3>Aucune carte sélectionnée</h3>
-            <p>Sélectionnez une carte ou créez-en une nouvelle</p>
+      <!-- Recherche -->
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Rechercher un artiste...">
+      </div>
+
+      <!-- Tri -->
+      <div class="sort-controls">
+        <select id="sortSelect" class="sort-select">
+          <option value="alpha">A → Z</option>
+          <option value="alpha-reverse">Z → A</option>
+          <option value="chrono">Chronologique ↑</option>
+          <option value="chrono-reverse">Chronologique ↓</option>
+          <option value="knowledge">Par connaissance 🎯</option>
+        </select>
+      </div>
+
+      <!-- Liste des artistes -->
+      <div id="artistsList" class="artists-list">
+        <!-- Les artistes seront ajoutés ici dynamiquement -->
+      </div>
+    </aside>
+
+    <!-- Zone principale -->
+    <main class="main-content">
+      <!-- État vide -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">🎨</div>
+        <h2>Bienvenue dans Bibliart</h2>
+        <p>Sélectionnez un artiste dans la liste ou créez-en un nouveau</p>
+        <button id="createFirstArtist" class="btn btn-primary">➕ Créer mon premier artiste</button>
+      </div>
+
+      <!-- Fiche artiste - Mode Lecture -->
+      <div id="artistCard" class="artist-card read-mode" style="display: none;">
+        <div class="artist-header">
+          <div class="artist-portrait-container">
+            <img id="artistPortrait" class="artist-portrait" src="" alt="Portrait">
+            <div class="portrait-placeholder">👤</div>
           </div>
+          <div class="artist-info">
+            <h1 id="artistName" class="artist-name">Nom de l'artiste</h1>
+            <div class="artist-meta">
+              <span id="artistDates" class="artist-dates">1452 - 1519</span>
+              <span class="meta-separator">•</span>
+              <span id="artistBirthplace" class="artist-birthplace">Vinci, Italie</span>
+            </div>
+            <div id="artistStyle" class="artist-style">Renaissance italienne</div>
+          </div>
+          <button id="deleteArtistBtn" class="btn-icon-delete" style="display: none;" title="Supprimer cet artiste">
+            🗑️
+          </button>
         </div>
 
-        <!-- Formulaire d'édition (caché par défaut) -->
-        <div id="cardEditor" class="card-editor" style="display: none;">
-          <div class="editor-header">
-            <h3>Édition de la carte</h3>
-            <div class="header-actions">
-              <div id="masteryBadge" class="mastery-badge">
-                <span style="color: #9CA3AF; font-size: 24px;">📝</span>
-                <span style="font-weight: 700; font-size: 20px; color: #9CA3AF;">0%</span>
-                <span style="font-size: 12px; color: var(--anthracite);">Non révisée</span>
-              </div>
-              <button id="deleteCardBtn" class="btn btn-danger">🗑️ Supprimer</button>
+        <div class="artist-body">
+          <!-- Biographie -->
+          <section class="bio-section">
+            <h3>📖 Biographie</h3>
+            <div id="artistBio" class="artist-bio">
+              <p>Cliquez sur "✏️ Édition" pour ajouter une biographie...</p>
             </div>
-          </div>
+          </section>
 
-          <!-- Statistiques de la carte -->
-          <div id="cardStats" class="card-stats">
-            <h4>📊 Statistiques</h4>
-            <div class="stats-grid">
-              <div class="stat-box">
-                <span class="stat-number" id="statPlayed">0</span>
-                <span class="stat-label">Fois jouée</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number stat-success" id="statCorrect">0</span>
-                <span class="stat-label">Réussites totales</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number stat-error" id="statWrong">0</span>
-                <span class="stat-label">Erreurs</span>
-              </div>
-              <div class="stat-box">
-                <span class="stat-number stat-rate" id="statRate">0%</span>
-                <span class="stat-label">Taux global</span>
+          <!-- Galerie d'œuvres -->
+          <section class="artworks-section">
+            <div class="section-header">
+              <h3>🖼️ Œuvres</h3>
+              <button id="addArtworkBtn" class="btn btn-add">➕ Ajouter une œuvre</button>
+            </div>
+            <div id="artworksList" class="artworks-grid">
+              <div class="empty-artworks">
+                <p>Aucune œuvre pour le moment</p>
               </div>
             </div>
-            
-            <!-- Statistiques détaillées par composant -->
-            <div class="stats-detailed">
-              <h5>📈 Taux de réussite par composant</h5>
-              <div class="stats-detail-grid">
-                <div class="stat-detail-box">
-                  <span class="stat-detail-icon">👤</span>
-                  <span class="stat-detail-label">Artiste</span>
-                  <span class="stat-detail-value" id="statArtistRate">0%</span>
-                </div>
-                <div class="stat-detail-box">
-                  <span class="stat-detail-icon">🎨</span>
-                  <span class="stat-detail-label">Titre</span>
-                  <span class="stat-detail-value" id="statTitleRate">0%</span>
-                </div>
-                <div class="stat-detail-box">
-                  <span class="stat-detail-icon">📅</span>
-                  <span class="stat-detail-label">Date</span>
-                  <span class="stat-detail-value" id="statDateRate">0%</span>
-                </div>
-              </div>
-              <div style="text-align: center; margin-top: 10px; padding: 10px; background: var(--light-cream); border-radius: 8px; border: 1px solid var(--beige);">
-                <span style="font-size: 12px; color: var(--anthracite); font-weight: 600;">📅 Dernière révision :</span>
-                <span id="lastPlayed" style="font-size: 12px; color: var(--burgundy); font-weight: 700; margin-left: 5px;">Jamais</span>
-              </div>
-            </div>
-            
-            <button id="resetStatsBtn" class="btn btn-secondary btn-small">🔄 Réinitialiser les stats</button>
-          </div>
+          </section>
+        </div>
+      </div>
 
+      <!-- Fiche artiste - Mode Édition -->
+      <div id="artistEditor" class="artist-editor" style="display: none;">
+        <div class="editor-header">
+          <h2>✏️ Édition de la fiche</h2>
+        </div>
+
+        <div class="editor-form">
+          <!-- Portrait -->
           <div class="form-group">
-            <label for="cardImage">Image de l'œuvre *</label>
-            <input type="file" id="cardImage" accept="image/*">
-            <div id="imagePreview" class="image-preview"></div>
+            <label for="editPortrait">Photo / Autoportrait</label>
+            <input type="file" id="editPortrait" accept="image/*">
+            <div id="editPortraitPreview" class="portrait-preview"></div>
           </div>
 
+          <!-- Nom -->
+          <div class="form-group">
+            <label for="editName">Nom de l'artiste *</label>
+            <input type="text" id="editName" placeholder="Ex: Léonard de Vinci" required>
+          </div>
+
+          <!-- Dates -->
           <div class="form-row">
             <div class="form-group">
-              <label for="cardArtist">Artiste *</label>
-              <input type="text" id="cardArtist" placeholder="Ex: Caravage" required>
+              <label for="editBirthYear">Année de naissance *</label>
+              <input type="number" id="editBirthYear" placeholder="Ex: 1452" required>
             </div>
-
             <div class="form-group">
-              <label for="cardDate">Date *</label>
-              <input type="text" id="cardDate" placeholder="Ex: 1602" required>
+              <label for="editDeathYear">Année de mort</label>
+              <input type="number" id="editDeathYear" placeholder="Ex: 1519">
             </div>
           </div>
 
+          <!-- Lieu de naissance -->
           <div class="form-group">
-            <label for="cardTitle">Titre de l'œuvre *</label>
-            <input type="text" id="cardTitle" placeholder="Ex: Le Caravage à Emmaüs" required>
+            <label for="editBirthplace">Lieu de naissance</label>
+            <input type="text" id="editBirthplace" placeholder="Ex: Vinci, Italie">
           </div>
 
+          <!-- Style -->
           <div class="form-group">
-            <label for="cardNote">📝 Note / Moyen mnémotechnique</label>
-            <textarea id="cardNote" placeholder="Ex: Peint pendant son exil à Naples - Clair-obscur caractéristique" rows="3"></textarea>
-            <small style="color: var(--gray-700); font-size: 12px;">Cette note s'affichera après votre réponse pour vous aider à mémoriser</small>
+            <label for="editStyle">Style / Courant artistique</label>
+            <input type="text" id="editStyle" placeholder="Ex: Renaissance italienne">
           </div>
 
+          <!-- Biographie -->
           <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="cardHasError">
-              <span>⚠️ Cette carte contient une erreur</span>
-            </label>
-            <small style="color: var(--gray-700); font-size: 12px; display: block; margin-top: 5px;">Cochez si vous avez détecté une erreur (artiste, titre, date incorrects)</small>
-          </div>
-
-          <div class="editor-actions">
-            <button id="saveCardBtn" class="btn btn-success">💾 Enregistrer</button>
-            <button id="cancelEditBtn" class="btn btn-secondary">Annuler</button>
+            <label for="editBio">Biographie</label>
+            <textarea id="editBio" rows="8" placeholder="Écrivez la biographie de l'artiste..."></textarea>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 
-  <!-- MODE QUIZ -->
-  <div id="quizMode" class="mode-container">
-    <div class="quiz-container">
-      <!-- En-tête du quiz -->
-      <div class="quiz-header">
-        <div class="quiz-header-content">
-          <div class="quiz-header-top">
-            <img src="logo.png" alt="QuizArt Logo" class="quiz-logo">
-            <h2 id="quizTitle">TESTEZ VOS CONNAISSANCES</h2>
-          </div>
-          
-          <!-- Sélecteur de mode -->
-          <div class="quiz-mode-selector">
-            <button class="quiz-mode-btn active" data-mode="all">📚 Toutes les cartes</button>
-            <button class="quiz-mode-btn" data-mode="smart">🧠 Révision intelligente</button>
-            <button class="quiz-mode-btn" data-mode="manual">⭐ Sélection manuelle</button>
-          </div>
-        </div>
-        
-        <div class="quiz-progress">
-          <div class="quiz-progress-row">
-            <span id="progressText">1 / 55</span>
-            <span id="timerDisplay" class="timer-display">⏱️ 0s</span>
-          </div>
-          <div class="progress-bar">
-            <div id="progressFill" class="progress-fill"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Contenu du quiz -->
-      <div id="quizContent" class="quiz-content">
-        <!-- État vide -->
-        <div id="quizEmpty" class="empty-state">
-          <div class="empty-icon">📝</div>
-          <h3>Aucune carte disponible</h3>
-          <p>Créez des cartes en mode édition pour commencer le quiz</p>
-        </div>
-
-        <!-- Carte du quiz -->
-        <div id="quizCard" class="quiz-card" style="display: none;">
-          <div class="card-image-container">
-            <img id="quizCardImage" src="" alt="Œuvre d'art">
-          </div>
-          
-          <div class="quiz-answer">
-            <input type="text" id="quizInput" placeholder="Votre réponse" autocomplete="off">
-            <button id="verifyBtn" class="btn btn-verify">Vérifier</button>
-          </div>
-
-          <div id="quizFeedback" class="quiz-feedback" style="display: none;">
-            <div class="feedback-content">
-              <span class="feedback-icon"></span>
-              <span class="feedback-text"></span>
-            </div>
-            <div class="correct-answer" id="correctAnswer"></div>
-            
-            <!-- Checkbox pour signaler une erreur -->
-            <div class="card-error-checkbox">
-              <label>
-                <input type="checkbox" id="cardErrorCheckbox">
-                <span>⚠️ Signaler une erreur dans cette carte</span>
-              </label>
-            </div>
-            
-            <div id="noteDisplay" class="note-display">
-              <div class="note-header">📝 Note / Moyen mnémotechnique</div>
-              <textarea id="noteInput" class="note-input" placeholder="Écrivez ici vos astuces, contexte historique, moyen mnémotechnique..." rows="3"></textarea>
-              <button id="saveNoteBtn" class="btn btn-success btn-small" style="margin-top: 10px;">💾 Sauvegarder</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Carte de résultat -->
-        <div id="quizResult" class="quiz-result" style="display: none;">
-          <div class="result-icon">🎉</div>
-          <h3>Quiz terminé !</h3>
-          <div class="result-stats">
-            <div class="stat">
-              <span class="stat-value" id="correctCount">0</span>
-              <span class="stat-label">Bonnes réponses</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value" id="wrongCount">0</span>
-              <span class="stat-label">Erreurs</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value" id="scorePercent">0%</span>
-              <span class="stat-label">Score</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value" id="pointsScore">0/0</span>
-              <span class="stat-label">Points</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value" id="pointsPercent">0%</span>
-              <span class="stat-label">Taux points</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value" id="sessionTime">0min 0s</span>
-              <span class="stat-label">⏱️ Temps total</span>
-            </div>
-          </div>
-          <div class="result-actions">
-            <button id="restartQuizBtn" class="btn btn-primary">🔄 Recommencer</button>
-            <button id="viewHistoryBtn" class="btn btn-secondary">📈 Voir l'historique</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Navigation -->
-      <div class="quiz-navigation">
-        <button id="prevCardBtn" class="nav-btn" disabled>← Précédent</button>
-        <button id="nextCardBtn" class="nav-btn">Suivant →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast notifications -->
-  <div id="toastContainer" class="toast-container"></div>
-
-  <!-- Modal Historique -->
-  <div id="historyModal" class="modal">
-    <div class="modal-content modal-large">
-      <div class="modal-header">
-        <h3>📈 Historique des quiz</h3>
-        <button class="modal-close" onclick="closeHistoryModal()">✕</button>
-      </div>
-      
-      <div id="historyContent" class="history-content">
-        <div class="history-empty">
-          <div class="empty-icon">📊</div>
-          <p>Aucun historique pour le moment</p>
-          <p class="small">Complétez un quiz pour voir vos statistiques</p>
-        </div>
-        
-        <div id="historyChart" style="display: none;">
-          <canvas id="progressChart" width="600" height="300"></canvas>
-        </div>
-        
-        <div id="historyList" class="history-list"></div>
-      </div>
-      
-      <div class="modal-footer">
-        <button id="clearHistoryBtn" class="btn btn-danger">🗑️ Effacer l'historique</button>
-        <button class="btn btn-secondary" onclick="closeHistoryModal()">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Statistiques de Session -->
-  <div id="sessionStatsModal" class="modal">
-    <div class="modal-content modal-large">
-      <div class="modal-header">
-        <h3>📊 Statistiques par session</h3>
-        <button class="modal-close" id="closeSessionStatsBtn">✕</button>
-      </div>
-      
-      <div class="session-stats-content">
-        <div id="sessionStatsList" class="session-stats-list">
-          <!-- Les statistiques seront ajoutées ici -->
-        </div>
-      </div>
-      
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeSessionStatsModal()">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de confirmation -->
+  <!-- Modal Confirmation -->
   <div id="confirmModal" class="modal modal-popup">
-    <div class="popup-overlay" onclick="document.getElementById('confirmNo').click()"></div>
+    <div class="popup-overlay"></div>
     <div class="modal-content modal-confirm">
       <div class="confirm-icon">⚠️</div>
       <h3 id="confirmTitle">Confirmation</h3>
@@ -402,64 +187,78 @@
     </div>
   </div>
 
-  <!-- Modal des succès -->
-  <div class="achievements-modal" id="achievementsModal">
-    <div class="achievements-modal-content">
-      <!-- Header -->
-      <div class="achievements-modal-header">
-        <div>
-          <div class="achievements-modal-title">
-            <span>🏆</span>
-            <span>Mes Succès</span>
-          </div>
-          <div class="achievements-modal-progress">
-            <span id="modalAchievementsCount">0</span> sur <span id="modalAchievementsTotal">32</span> succès débloqués
-          </div>
+  <!-- Modal Ajouter Œuvre -->
+  <div id="artworkModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h3>➕ Ajouter une œuvre</h3>
+        <button class="modal-close" id="closeArtworkModal">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="artworkImage">Image de l'œuvre *</label>
+          <input type="file" id="artworkImage" accept="image/*" required>
+          <div id="artworkImagePreview" class="image-preview"></div>
         </div>
-        <button class="achievements-modal-close" onclick="closeAchievementsModal()">✕</button>
+
+        <div class="form-group">
+          <label for="artworkTitle">Titre *</label>
+          <input type="text" id="artworkTitle" placeholder="Ex: La Joconde" required>
+        </div>
+
+        <div class="form-group">
+          <label for="artworkDate">Date</label>
+          <input type="text" id="artworkDate" placeholder="Ex: 1503-1519">
+        </div>
+
+        <div class="form-group">
+          <label for="artworkTechnique">🎨 Moyen / Technique</label>
+          <input type="text" id="artworkTechnique" placeholder="Ex: Huile sur toile, 162 × 210 cm">
+        </div>
+
+        <div class="form-group">
+          <label for="artworkAnalysis">Analyse de l'œuvre</label>
+          <textarea id="artworkAnalysis" rows="6" placeholder="Votre analyse : composition, couleurs, contexte historique, symbolique..."></textarea>
+        </div>
       </div>
 
-      <!-- Filtres -->
-      <div class="achievements-filters">
-        <button class="achievement-filter-btn active" data-filter="all">Tous</button>
-        <button class="achievement-filter-btn" data-filter="discovery">🎨 Découverte</button>
-        <button class="achievement-filter-btn" data-filter="revision">📚 Révision</button>
-        <button class="achievement-filter-btn" data-filter="performance">🎯 Performance</button>
-        <button class="achievement-filter-btn" data-filter="specialization">🧠 Spécialisation</button>
-        <button class="achievement-filter-btn" data-filter="challenge">🏅 Défis</button>
-        <button class="achievement-filter-btn" data-filter="progression">📈 Progression</button>
-      </div>
-
-      <!-- Liste des succès -->
-      <div class="achievements-list" id="achievementsList">
-        <!-- Généré dynamiquement -->
-      </div>
-
-      <!-- Stats globales -->
-      <div class="achievements-stats">
-        <div class="achievement-stat">
-          <span class="achievement-stat-value" id="statCommon">0</span>
-          <span class="achievement-stat-label">⚪ Communs</span>
-        </div>
-        <div class="achievement-stat">
-          <span class="achievement-stat-value" id="statRare">0</span>
-          <span class="achievement-stat-label">🔵 Rares</span>
-        </div>
-        <div class="achievement-stat">
-          <span class="achievement-stat-value" id="statEpic">0</span>
-          <span class="achievement-stat-label">🟣 Épiques</span>
-        </div>
-        <div class="achievement-stat">
-          <span class="achievement-stat-value" id="statLegendary">0</span>
-          <span class="achievement-stat-label">🟡 Légendaires</span>
-        </div>
+      <div class="modal-footer">
+        <button id="saveArtworkBtn" class="btn btn-success">💾 Ajouter l'œuvre</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('closeArtworkModal').click()">Annuler</button>
       </div>
     </div>
   </div>
 
-  <script src="db-manager.js"></script>
-  <script src="achievements.js"></script>
-  <script src="achievements-ui.js"></script>
+  <!-- Toast notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Modal détails œuvre -->
+  <div id="artworkDetailsModal" class="popup-overlay" style="display: none;">
+    <div class="popup-content" style="max-width: 900px;">
+      <button id="closeDetailsModal" class="close-popup">✕</button>
+      <h2 id="detailsTitle">Titre de l'œuvre</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+        <!-- Image -->
+        <div>
+          <img id="detailsImage" src="" alt="" style="width: 100%; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          <div id="detailsInfo" style="margin-top: 15px; color: var(--burgundy); font-size: 14px;"></div>
+        </div>
+        
+        <!-- Analyse -->
+        <div>
+          <h3 style="color: var(--burgundy); margin-bottom: 15px;">📝 Analyse</h3>
+          <div id="detailsAnalysis" style="line-height: 1.8; color: #333; white-space: pre-line;"></div>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="margin-top: 30px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('closeDetailsModal').click()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
