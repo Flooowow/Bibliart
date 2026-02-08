@@ -437,13 +437,15 @@ function showArtistCard() {
     portraitPlaceholder.style.display = 'flex';
   }
   
-  // Biographie
-  const bioEl = document.getElementById('artistBio');
-  if (artist.bio) {
-    bioEl.innerHTML = `<p>${artist.bio.replace(/\n/g, '</p><p>')}</p>`;
-  } else {
-    bioEl.innerHTML = '<p style="font-style: italic; opacity: 0.6;">Aucune biographie pour le moment...</p>';
-  }
+ // Biographie
+const bioEl = document.getElementById('artistBio');
+if (artist.bio) {
+  // Convertir le Markdown **texte** en <strong>texte</strong>
+  const bioWithBold = artist.bio.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+  bioEl.innerHTML = `<p>${bioWithBold.replace(/\n/g, '</p><p>')}</p>`;
+} else {
+  bioEl.innerHTML = '<p style="font-style: italic; opacity: 0.6;">Aucune biographie pour le moment...</p>';
+}
   
   // Œuvres
   renderArtworks(artist);
@@ -764,7 +766,22 @@ function renderArtworks(artist) {
     return;
   }
   
-  container.innerHTML = artist.artworks.map(artwork => {
+  // ✨ TRI AUTOMATIQUE PAR DATE (croissante)
+  const sortedArtworks = [...artist.artworks].sort((a, b) => {
+    // Extraire l'année de la date (prend le premier nombre trouvé)
+    const getYear = (dateStr) => {
+      if (!dateStr) return 9999; // Les œuvres sans date à la fin
+      const match = dateStr.match(/\d{4}/);
+      return match ? parseInt(match[0]) : 9999;
+    };
+    
+    const yearA = getYear(a.date);
+    const yearB = getYear(b.date);
+    
+    return yearA - yearB; // Tri croissant
+  });
+  
+  container.innerHTML = sortedArtworks.map(artwork => {
     const analysisPreview = artwork.analysis ? 
       `<div class="artwork-analysis-preview">${escapeHtml(artwork.analysis)}</div>` : 
       `<div class="artwork-analysis-preview">Aucune analyse pour cette œuvre</div>`;
