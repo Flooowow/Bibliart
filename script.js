@@ -826,8 +826,6 @@ function renderArtworks(artist) {
     
     return `
       <div class="artwork-card">
-        <button class="btn-delete-artwork" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">✕</button>
-        <button class="btn-edit-artwork" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
         ${statsBadge}
         <img src="${artwork.image}" 
              alt="${artwork.title}" 
@@ -835,12 +833,16 @@ function renderArtworks(artist) {
              onclick="showArtworkDetails(${artwork.id})"
              style="cursor: pointer;"
              title="Cliquer pour voir les détails">
-        <div class="artwork-info">
-          <div class="artwork-title">${escapeHtml(artwork.title)}</div>
-          ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
-          ${suggestionBadge}
-        </div>
-      </div>
+      <div class="artwork-info">
+      <div class="artwork-title">${escapeHtml(artwork.title)}</div>
+      ${artwork.date ? `<div class="artwork-date">${escapeHtml(artwork.date)}</div>` : ''}
+      ${suggestionBadge}
+    </div>
+    <div class="artwork-actions">
+      <button class="btn-delete-artwork" onclick="deleteArtwork(${artwork.id})" title="Supprimer cette œuvre">✕</button>
+      <button class="btn-edit-artwork" onclick="editArtworkAnalysis(${artwork.id})" title="Modifier cette œuvre">✏️</button>
+    </div>
+  </div>
     `;
   }).join('');
 }
