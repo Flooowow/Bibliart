@@ -340,16 +340,17 @@ async function checkStorageQuota() {
 // ==================== ARTIST MANAGEMENT ====================
 function createNewArtist() {
   const newArtist = {
-    id: Date.now(),
-    name: '',
-    birthYear: null,
-    deathYear: null,
-    birthplace: '',
-    style: '',
-    bio: '',
-    portrait: null,
-    artworks: []
-  };
+  id: Date.now(),
+  name: '',
+  birthYear: null,
+  deathYear: null,
+  birthplace: '',
+  style: '',
+  bio: '',
+  keyPoints: '',  // ← AJOUTÉ
+  portrait: null,
+  artworks: []
+};
   
   artists.push(newArtist);
   currentArtistId = newArtist.id;
@@ -437,14 +438,25 @@ function showArtistCard() {
     portraitPlaceholder.style.display = 'flex';
   }
   
- // Biographie
+// ✨ MODIFICATION 1: Biographie avec support **gras**
 const bioEl = document.getElementById('artistBio');
 if (artist.bio) {
-  // Convertir le Markdown **texte** en <strong>texte</strong>
+  // Convertir **texte** en <strong>texte</strong>
   const bioWithBold = artist.bio.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
   bioEl.innerHTML = `<p>${bioWithBold.replace(/\n/g, '</p><p>')}</p>`;
 } else {
-  bioEl.innerHTML = '<p style="font-style: italic; opacity: 0.6;">Aucune biographie pour le moment...</p>';
+  bioEl.innerHTML = '<p style="font-style: italic; opacity: 0.6;">Aucune biographie...</p>';
+}
+
+// ✨ MODIFICATION 2: Points clés
+const keyPointsList = document.getElementById('keyPointsList');
+if (artist.keyPoints && artist.keyPoints.trim()) {
+  const points = artist.keyPoints.split('\n').filter(p => p.trim());
+  keyPointsList.innerHTML = points.map(point => 
+    `<div class="key-point-item">${escapeHtml(point.trim())}</div>`
+  ).join('');
+} else {
+  keyPointsList.innerHTML = '<p class="key-points-empty">Aucun point clé</p>';
 }
   
   // Œuvres
@@ -466,6 +478,7 @@ function showArtistEditor() {
   document.getElementById('editBirthplace').value = artist.birthplace || '';
   document.getElementById('editStyle').value = artist.style || '';
   document.getElementById('editBio').value = artist.bio || '';
+  document.getElementById('editKeyPoints').value = artist.keyPoints || '';
   
   // Preview du portrait
   const preview = document.getElementById('editPortraitPreview');
@@ -493,6 +506,7 @@ function saveCurrentArtist() {
   artist.birthplace = document.getElementById('editBirthplace').value.trim();
   artist.style = document.getElementById('editStyle').value.trim();
   artist.bio = document.getElementById('editBio').value.trim();
+  artist.keyPoints = document.getElementById('editKeyPoints').value.trim();
   
   saveToLocalStorage();
   renderArtistsList();
