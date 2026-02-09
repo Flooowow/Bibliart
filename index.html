@@ -82,17 +82,26 @@
             <div class="portrait-placeholder">👤</div>
           </div>
           <div class="artist-info">
-            <h1 id="artistName" class="artist-name">Nom de l'artiste</h1>
-            <div class="artist-meta">
-              <span id="artistDates" class="artist-dates">1452 - 1519</span>
-              <span class="meta-separator">•</span>
-              <span id="artistBirthplace" class="artist-birthplace">Vinci, Italie</span>
-            </div>
-            <div id="artistStyle" class="artist-style">Renaissance italienne</div>
-          </div>
-          <button id="deleteArtistBtn" class="btn-icon-delete" style="display: none;" title="Supprimer cet artiste">
-            🗑️
-          </button>
+  <h1 id="artistName" class="artist-name">Nom de l'artiste</h1>
+  <div class="artist-meta">
+    <span id="artistDates" class="artist-dates">1452 - 1519</span>
+    <span class="meta-separator">•</span>
+    <span id="artistBirthplace" class="artist-birthplace">Vinci, Italie</span>
+  </div>
+  <div id="artistStyle" class="artist-style">Renaissance italienne</div>
+</div>
+
+<!-- 🎯 Points clés -->
+<div class="key-points-box">
+  <h4 class="key-points-title">🎯 Points clés</h4>
+  <div id="keyPointsList" class="key-points-list">
+    <p class="key-points-empty">Aucun point clé</p>
+  </div>
+</div>
+
+<button id="deleteArtistBtn" class="btn-icon-delete" style="display: none;">
+  🗑️
+</button>
         </div>
 
         <div class="artist-body">
@@ -172,7 +181,14 @@
       </div>
     </main>
   </div>
-
+<!-- Points clés -->
+<div class="form-group">
+  <label for="editKeyPoints"> Points clés (un par ligne)</label>
+  <textarea id="editKeyPoints" rows="5" placeholder="Ex:&#10;Peintre majeur de la Renaissance&#10;Protégé des Médicis&#10;Auteur de La Naissance de Vénus&#10;Style élégant et expressif"></textarea>
+  <small style="color: var(--text-tertiary); font-size: 12px;">
+     Conseil : 3 à 5 points maximum pour rester lisible
+  </small>
+</div>
   <!-- Modal Confirmation -->
   <div id="confirmModal" class="modal modal-popup">
     <div class="popup-overlay"></div>
